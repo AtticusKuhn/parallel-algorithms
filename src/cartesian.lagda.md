@@ -13,6 +13,7 @@ open import Felix.Raw  -- hiding (_⊎_ ; _×_)
 
 
 ```agda
+-- import monoidal operations
 open import monoid -- hiding (a ; b ; c)
 open monoidCategory
 
@@ -36,11 +37,9 @@ open →-instances
 -- open import Data.Product
 
 
-double :  a ⇨ a
-double  = (madd z) ∘ dup
 
 
-
+-- here is how a tree is defined inductively`
 data Tree (a : Set)  : Set  where
   Leaf : a -> Tree a
   Branch : Tree a -> Tree a -> Tree a
@@ -48,6 +47,7 @@ data Tree (a : Set)  : Set  where
 open import Agda.Builtin.Sigma
 
 open import Data.Sum.Base hiding (_⊎_)
+-- Note that this definition of tree is bad because it does not terminate
 --{-# TERMINATING #-}
 --myTree :  Set → Set
 -- myTree a = ( a ⊎ ( (myTree a) × (myTree a)))
@@ -56,18 +56,13 @@ open import Data.Sum.Base hiding (_⊎_)
 -- unroll2 (Leaf a) = {! !}
 -- unroll2 (Branch x t) = {! !}
 -- open import Felix.Instances.Function.Type
-open import Data.List
-
-testid :  a ⇨ a
-testid = id
 
 
-reduceBranch : a ⊎ (a × a) ⇨ a
-reduceBranch = id ▿ (madd z)
 
 -- reduceTree : a ⊎ (Tree a × Tree a) ⇨ a
 -- reduceTree ={! id ▿ !}
 
+-- a tree bounded by a height n
 boundedTree : ℕ → Set →  Set
 boundedTree zero a = a
 boundedTree (suc n) a = (boundedTree n a) × (boundedTree n a)
@@ -75,22 +70,8 @@ boundedTree (suc n) a = (boundedTree n a) × (boundedTree n a)
 -- reduceTree :  ( Tree a ) ⇨ a
 -- reduceTree =    id ▿  madd z ∘ twice  (reduceTree)
 
+-- reduce a bounded tree
 reduceBoundedTree : ( n : ℕ ) → (boundedTree n a) ⇨ a
 reduceBoundedTree zero  = id
 reduceBoundedTree (suc n) = madd z ∘ twice (reduceBoundedTree n)
-
-module test where
-open import Data.Nat.Base
-open import Felix.Instances.Function.Raw
-open import Data.Sum
---open →-instances
--- open →-raw-instances
--- testTree : myTree  ℕ
--- testTree = inj₁ 0
-
-
--- test : myTree a → a
--- test = reduceTree {_⇨_ = (λ a b → a → b)}
-
-
 ```

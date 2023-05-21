@@ -1,4 +1,5 @@
-
+In this file, we will prove certain properties about our parallel reduction algorithm. The first property we will prove is the runtime, that it runs
+in logarithmic time.
 
 
 ⇉ represents a tracked computation, i.e. a computation where the number of steps needed to execute the computation is tracked by a nat representing the number of steps.
@@ -34,13 +35,6 @@ instance
   ps = products Agda.Primitive.lzero
   pc : Coproducts Set
   pc = coproducts Agda.Primitive.lzero
- -- cat : Category (λ A B → A → B)
- -- cat = category Agda.Primitive.lzero
-  --catcar : Cartesian (λ A B → A → B)
- -- catcar = cartesian Agda.Primitive.lzero
---  catcarco : Cocartesian (λ A B → A → B)
---  catcarco = cocartesian Agda.Primitive.lzero
-
 
 _⇉_ : Set → Set → Set
 a ⇉ b =  a × ℕ  → b × ℕ
@@ -93,24 +87,22 @@ instance
 
 ```
 # Proof
+Here is the actual proof that parallel reduction runs in logarithmic time
 ```agda
 
---testTree : boundedTree ℕ 2 ℕ
---testTree = (( 1 , 2 ) , ( 3 , 4 ))
-
---testTrackedReduce : ℕ × ℕ
---testTrackedReduce = reduceBoundedTree ℕ {{z = monoidNat}} 2 (testTree , 0)
-
 open import Agda.Builtin.Equality
+-- test that maximum works
 testMax : 4 ⊔ 5 ≡ 5
 testMax = refl
 
 open import Relation.Binary.PropositionalEquality
+-- prove that the maximum function is idempotent
 maxIdempotent : (n : ℕ) → n ⊔ n ≡ n
 maxIdempotent zero  = refl
 maxIdempotent (suc b) = cong suc (maxIdempotent b)
 
 open ≡-Reasoning
+-- the big theorem, prove that reduction runs in logarithmic time.
 trackedTheorem : (size :  ℕ) → (tree : boundedTree ℕ size ℕ ) → snd (reduceBoundedTree ℕ size ( tree , 0 )) ≡ size
 trackedTheorem zero a = refl
 trackedTheorem (suc n) (a , b)  =
@@ -125,6 +117,5 @@ trackedTheorem (suc n) (a , b)  =
     ≡⟨ cong suc (maxIdempotent n) ⟩
     suc n
   ∎
-
 
 ```
