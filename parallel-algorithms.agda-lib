@@ -1,0 +1,3 @@
+name: parallel-algorithms
+depend: felix standard-library
+include: src

@@ -1,4 +1,7 @@
+# Monoid
 
+This file implements a monoidal category, or a category equipped with a monoidal combining operation.
+The combining operation is called `madd` and can represent any operation from addition to multiplication.
 
 ```agda
 

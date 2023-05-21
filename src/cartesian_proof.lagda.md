@@ -3,10 +3,8 @@
 
 ⇉ represents a tracked computation, i.e. a computation where the number of steps needed to execute the computation is tracked by a nat representing the number of steps.
 
+# Imports
 ```agda
-
-
-
 open import cartesian
 open import monoid
 
@@ -23,6 +21,14 @@ open import Data.Sum.Base
 open import Felix.Instances.Function.Raw
 open →-raw-instances
 open →-instances
+
+```
+
+# Instances
+The idea is that we create custom categorical instances for our ⇉ operation to capture its custom semantics.
+The semantics are that ⇉ represents a function which returns a pair of the result and a natural number representing the number of steps it took to
+compute that result.
+```agda
 instance
   ps : Products Set
   ps = products Agda.Primitive.lzero
@@ -85,7 +91,9 @@ instance
     { madd = λ ((a , b) , n) → (a + b , suc n)
     ; mzero = λ (t , n) →  ( 0 , n )}
 
-
+```
+# Proof
+```agda
 
 --testTree : boundedTree ℕ 2 ℕ
 --testTree = (( 1 , 2 ) , ( 3 , 4 ))

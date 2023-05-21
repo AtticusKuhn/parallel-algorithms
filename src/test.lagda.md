@@ -1,6 +1,10 @@
 
 
 
+
+In this file, we will test our reduction function to make sure that it really works
+
+# Imports
 ```agda
 import cartesian
 import monoid
@@ -16,8 +20,12 @@ open import Felix.Raw  -- hiding (_⊎_ ; _×_)
 open →-raw-instances
 
 open import Agda.Builtin.Sigma
+
+```
+# Instances
+```agda
 instance
-  monoidNat : monoid.monoidCategory {obj = Set} ⦃ prodmon = products Agda.Primitive.lzero ⦄ {_⇨_ = λ A B → A → B} ⦃ bruhcat = category Agda.Primitive.lzero ⦄ ⦃ brucat = cartesian Agda.Primitive.lzero ⦄ ℕ
+  monoidNat : monoid.monoidCategory ⦃ prodmon = products Agda.Primitive.lzero ⦄ {_⇨_ = λ A B → A → B} ⦃ bruhcat = category Agda.Primitive.lzero ⦄ ⦃ brucat = cartesian Agda.Primitive.lzero ⦄ ℕ
   monoidNat = record
     { madd = λ x → (fst x) + (snd x)
     ; mzero = λ t → 0}
@@ -33,7 +41,10 @@ instance
   catcar = cartesian Agda.Primitive.lzero
   catcarco : Cocartesian (λ A B → A → B)
   catcarco = cocartesian Agda.Primitive.lzero
-
+```
+# Test
+Test that the reduction on trees actually does what we want it to do.
+```agda
 --longType : Set
 --longType = cartesian.Tree  ℕ {_⇨_ = λ A B → A → B } ⦃ x = category Agda.Primitive.lzero ⦄ ⦃ y = cartesian Agda.Primitive.lzero ⦄ ⦃ f = cocartesian Agda.Primitive.lzero ⦄ ⦃ z = monoidNat ⦄ ℕ
 --testTree : cartesian.Tree  ℕ {_⇨_ = λ A B → A → B } ⦃ x = category Agda.Primitive.lzero ⦄ ⦃ y = cartesian Agda.Primitive.lzero ⦄ ⦃ f = cocartesian Agda.Primitive.lzero ⦄ ⦃ z = monoidNat ⦄ ℕ
