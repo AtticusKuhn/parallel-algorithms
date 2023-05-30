@@ -114,6 +114,12 @@ Conal Elliott made me realize that the cost of a lambda term is undeciable, so m
 
 Also, I realized that it is impossible to get a lower bound on the time of an algorithm, we can only ever get an upper bound on an execution time.
 
+Even if one execution strategy gives one execution time to an algorithm, we have no way of knowing if another execution strategy might give a better time, so we can only
+have an upper bound on the time of an algorithm. The datatype `CostLub` gives an upper bound on the cost of a function. `CostLub f x n` is the proposition that the function `f`
+can be called on the input `x` in `n` time.
+
+I also created the datatype `Equal` to use in `CostLub`. `Equal f g` is the proposition that the algorithm `f` is equal to the algorithm `g`.
+
 
 ```agda
 
