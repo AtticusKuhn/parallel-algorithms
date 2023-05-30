@@ -34,12 +34,20 @@ data _⟹_ : Set → Set → Set₁ where
   _m▵_ : (left : A ⟹ C) → (right : A ⟹ D) → (A ⟹ (C × D))
   madd : ( ℕ × ℕ ) ⟹ ℕ
 
+-- a number category
+data _↝_ : Set → Set →  Set₁ where
+  zero : ⊤ ↝ A
+  one : ⊤ ↝ A
+  add : (A × A) ↝ A
+  max : (A × A) ↝ A
+open import Function.Base using (id ; _∘_)
+open import Agda.Builtin.Sigma
 evaluate : (f : A ⟹ B) → (x : A) → B
-evaluate mid x = x
-evaluate (f m∘ g) x = evaluate f (evaluate g x)
+evaluate mid  = id
+evaluate (f m∘ g) = (evaluate f) ∘ (evaluate g)
 evaluate m! x = tt
-evaluate mexl ( a , b ) =  a
-evaluate mexr (a , b) = b
+evaluate mexl  = fst
+evaluate mexr  = snd
 evaluate (f m▵ g) x = (evaluate f x , evaluate g x)
 evaluate madd (a , b) = a + b
 
@@ -51,6 +59,8 @@ parallelCost mexl a = 0
 parallelCost mexr a = 0
 parallelCost (f m▵ g) a = (parallelCost f a) ⊔ (parallelCost g a)
 parallelCost (madd) x = 1
+
+
 ```
 
 # Tree
@@ -94,4 +104,56 @@ Prove that it takes `n` time to reduce a tree of height `n` in parallel.
 timeReduce : (n : ℕ ) → (t : tree n ℕ) → parallelCost (reduce n) t ≡ n
 timeReduce 0 x = refl
 timeReduce (suc n ) (a , b) rewrite (addZero (parallelCost (reduce n) a)) | (addZero (parallelCost (reduce n ) a )) | (addZero (parallelCost (reduce n) b)) | (timeReduce n a) | (timeReduce n b) | (maxIdempotent n) = refl
+```
+
+
+# Undeciable
+
+Conal Elliott made me realize that the cost of a lambda term is undeciable, so my previous definition had been wrong.
+
+
+Also, I realized that it is impossible to get a lower bound on the time of an algorithm, we can only ever get an upper bound on an execution time.
+
+
+```agda
+
+data Equal : {A B : Set} → ( A ⟹ B ) → (A ⟹ B) → Set where
+  refl : {A B : Set}  → (f : A ⟹ B) → Equal f f
+  idright : {A B : Set} → (f : A ⟹ B) → Equal (f m∘ mid) f
+  idleft : {A B : Set} → (f : A ⟹ B) → Equal (mid m∘ f) f
+  assoc : {A B C D : Set} → (f : C ⟹ D) → (g : B ⟹ C) → (h : A ⟹ B) → Equal (f m∘ (g m∘ h)) ((f m∘ g) m∘ h)
+  allTrue : {A : Set} → (f : A ⟹ ⊤ ) → Equal f m!
+  distribTriangle : {A B C : Set} → (f : A ⟹ B) → (g : A ⟹ B) → (h : A ⟹ C) → (k : A ⟹ C) → (Equal f g) → (Equal k h) → Equal (f m▵  k) (g m▵ h)
+
+
+testEqual : (f : A ⟹ B) → (g : A ⟹ C) →  Equal ( mexl m∘  (f m▵ g) ) f
+testEqual f g = {! !}
+
+data CostLub : {A : Set} → {B : Set} → (A ⟹ B) → A → ℕ →  Set₁ where
+  LubId : {C : Set}  → (x : C) → CostLub mid x 0
+  LubExl :{C : Set} → {D : Set} → (x : C × D) →  CostLub mexl x 0
+  LubExr :{C : Set} → {D : Set} → (x : C × D) →  CostLub mexr x 0
+  LubBang : {A : Set} → (x : A) → CostLub m! x 0
+  LubComp : {A B C : Set} → (f : B ⟹ C) → (g : A ⟹ B) → (n : ℕ) → (m : ℕ) → (a : A)  → (x : CostLub f (evaluate g a) n) → (y : CostLub g a m) → CostLub (f m∘ g) a (n + m)
+  LubTriangle : {A B C : Set} → (f : A ⟹ B) → (g : A ⟹ C) → (n : ℕ) → (m : ℕ) → (a : A)  (x : CostLub f a n) → (y : CostLub g a m) → CostLub (f m▵ g) a (n ⊔ m)
+  LubEqual : {A B : Set} → (x : A) → (n : ℕ) → (f : A ⟹ B) → (g : A  ⟹ B) → Equal f g → CostLub f x n → CostLub g x n
+
+
+open import Relation.Binary.PropositionalEquality using (subst)
+
+timeLub : (n : ℕ) → (t : tree n ℕ) → (e : (a : ℕ) → (b :  ℕ) → CostLub madd ( a , b) 1) → CostLub (reduce n) t n
+timeLub 0 a e = LubId a
+timeLub (suc n) ( a , b ) e rewrite (maxIdempotent n) = LubComp madd ( (reduce n  m∘ mexl) m▵ (reduce n m∘ mexr)) 1 n (a , b) (e (evaluate (reduce n) a) (evaluate (reduce n) b))
+  (subst (λ x → (CostLub ((reduce n m∘ mexl) m▵ (reduce n m∘ mexr)) ( a , b ) x)) (maxIdempotent n)
+  (LubTriangle (reduce n m∘ mexl) (reduce n m∘ mexr) n n (a , b) (subst (λ x → CostLub (reduce n m∘ mexl) (a , b) x) (addZero n) ( LubComp (reduce n) mexl n 0 ((a , b)) (timeLub n a e) (LubExl ((a , b))))) (subst (λ x → CostLub (reduce n m∘ mexr) (a , b) x) (addZero n) (LubComp (reduce n) mexr n 0 ((a , b)) (timeLub n b e) (LubExr ( (a , b)))))))
+
+
+automaticLub : (expr : A ⟹ B) → (x : A ) → CostLub expr x (parallelCost expr x)
+automaticLub mid x = LubId x
+automaticLub (f m∘ g) x = LubComp f g (parallelCost f (evaluate g x)) (parallelCost g x) x (automaticLub f (evaluate g x)) ( automaticLub g x)
+automaticLub m! x = LubBang x
+automaticLub mexl x = LubExl x
+automaticLub mexr x = LubExr x
+automaticLub (f m▵ g) x = LubTriangle (f) (g) (parallelCost f x) (parallelCost g x) x (automaticLub f x) (automaticLub g x)
+automaticLub madd x = {!!}
 ```
