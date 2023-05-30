@@ -2,6 +2,9 @@
 
 An experiment with using Cubical agda!
 
+My idea is that using higher inductive types (HITs) can make illegal code unwritable, i.e.
+any code that uses _⟹_ **must** respect the identities that id ∘ f = f, for example.
+
 
 ```agda
 {-# OPTIONS --cubical #-}
@@ -28,7 +31,7 @@ data _⟹_ : Set → Set → Set₁ where
 
 import Function.Base  as f using (id ; _∘_)
 open import Agda.Builtin.Sigma
-evaluate : (f : ℕ ⟹ ℕ) → (x : ℕ) → ℕ
+evaluate : (f : A ⟹ B) → (x : A) → B
 evaluate id  = λ x → x
 evaluate (f ∘ g) = (evaluate f) f.∘ (evaluate g)
 evaluate ! x = tt
