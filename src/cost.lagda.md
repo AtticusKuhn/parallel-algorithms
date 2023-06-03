@@ -8,11 +8,37 @@ Here I will try to define a cost function and then I will prove the cost of a pa
 Import the needed libraries
 
 ```agda
+
+open import Felix.Raw  -- hiding (_⊎_ ; _×_)
+```
+
+
+
+```agda
+-- import monoidal operations
+open import monoid -- hiding (a ; b ; c)
+open monoidCategory
+open import Felix.Equiv
+-- open import Agda.Primitive.Level
+-- open Equivalence
+-- open ≡-Reasoning
+
 module cost
+             ⦃ p : Products Set ⦄
+            ⦃ cp : Coproducts Set ⦄
+          (a : Set)
+         {_⇨_ : Set → Set → Set} (let infix 0 _⇨_; _⇨_ = _⇨_)
+         ⦃ x : Category _⇨_ ⦄ ⦃ y : Cartesian _⇨_ ⦄
+         ⦃ f : Cocartesian _⇨_ ⦄
+         ⦃ z : monoidCategory {{p}} {{x}} {{y}} a ⦄
+         {{ equiv : Equivalent Agda.Primitive.lzero _⇨_ }}
+
  where
 
-open import Data.Unit.Base
-open import Data.Product
+
+
+-- open import Data.Unit.Base
+-- open import Data.Product
 open import Data.Nat.Base
 open import Agda.Builtin.Equality
 open import Relation.Binary.PropositionalEquality
@@ -25,40 +51,40 @@ variable
 
 Define the closed cartesian category data structure and operations over the structure.
 ```agda
-data _⟹_ : Set → Set → Set₁ where
-  mid : A ⟹ A
-  _m∘_ : (f : B ⟹ C) → (g : A ⟹ B) → (A ⟹ C)
-  m! : A ⟹ ⊤
-  mexl : (A × B) ⟹ A
-  mexr :  (A × B) ⟹ B
-  _m▵_ : (left : A ⟹ C) → (right : A ⟹ D) → (A ⟹ (C × D))
-  madd : ( ℕ × ℕ ) ⟹ ℕ
+-- data _⟹_ : Set → Set → Set₁ where
+--   mid : A ⟹ A
+--   _m∘_ : (f : B ⟹ C) → (g : A ⟹ B) → (A ⟹ C)
+--   m! : A ⟹ ⊤
+--   mexl : (A × B) ⟹ A
+--   mexr :  (A × B) ⟹ B
+--   _m▵_ : (left : A ⟹ C) → (right : A ⟹ D) → (A ⟹ (C × D))
+--   madd : ( ℕ × ℕ ) ⟹ ℕ
 
--- a number category
-data _↝_ : Set → Set →  Set₁ where
-  zero : ⊤ ↝ A
-  one : ⊤ ↝ A
-  add : (A × A) ↝ A
-  max : (A × A) ↝ A
-open import Function.Base using (id ; _∘_)
-open import Agda.Builtin.Sigma
-evaluate : (f : A ⟹ B) → (x : A) → B
-evaluate mid  = id
-evaluate (f m∘ g) = (evaluate f) ∘ (evaluate g)
-evaluate m! x = tt
-evaluate mexl  = fst
-evaluate mexr  = snd
-evaluate (f m▵ g) x = (evaluate f x , evaluate g x)
-evaluate madd (a , b) = a + b
+-- -- a number category
+-- data _↝_ : Set → Set →  Set₁ where
+--   zero : ⊤ ↝ A
+--   one : ⊤ ↝ A
+--   add : (A × A) ↝ A
+--   max : (A × A) ↝ A
+-- open import Function.Base using (id ; _∘_)
+-- open import Agda.Builtin.Sigma
+-- evaluate : (f : A ⟹ B) → (x : A) → B
+-- evaluate mid  = id
+-- evaluate (f m∘ g) = (evaluate f) ∘ (evaluate g)
+-- evaluate m! x = tt
+-- evaluate mexl  = fst
+-- evaluate mexr  = snd
+-- evaluate (f m▵ g) x = (evaluate f x , evaluate g x)
+-- evaluate madd (a , b) = a + b
 
-parallelCost : (A ⟹ B) → A → ℕ
-parallelCost mid a = 0
-parallelCost (f m∘ g) a = parallelCost f (evaluate g a) + parallelCost g a
-parallelCost m! a = 0
-parallelCost mexl a = 0
-parallelCost mexr a = 0
-parallelCost (f m▵ g) a = (parallelCost f a) ⊔ (parallelCost g a)
-parallelCost (madd) x = 1
+-- parallelCost : (A ⟹ B) → A → ℕ
+-- parallelCost mid a = 0
+-- parallelCost (f m∘ g) a = parallelCost f (evaluate g a) + parallelCost g a
+-- parallelCost m! a = 0
+-- parallelCost mexl a = 0
+-- parallelCost mexr a = 0
+-- parallelCost (f m▵ g) a = (parallelCost f a) ⊔ (parallelCost g a)
+-- parallelCost (madd) x = 1
 
 
 ```
@@ -68,42 +94,33 @@ Define a tree and methods to reduce the tree
 
 ```agda
 
+tree : ℕ → Set →  Set
+tree zero a = a
+tree (suc n) a = (tree n a) × (tree n a)
 
-tree : (n : ℕ) → Set → Set
-tree 0 a = a
-tree (suc n ) a = (tree n a) × (tree n a)
+reduce : ( n : ℕ ) → (tree n a) ⇨ a
+reduce zero  = id
+reduce (suc n) = madd z ∘ twice (reduce n)
 
-reduce : (n : ℕ ) → (tree n  ℕ ⟹ ℕ)
-reduce 0 = mid
-reduce (suc n) = madd m∘ ( (reduce n  m∘ mexl) m▵ (reduce n m∘ mexr))
+-- testTree : tree 2 ℕ
+-- testTree = (( 1 , 2 ) , (3 , 4))
 
-testTree : tree 2 ℕ
-testTree = (( 1 , 2 ) , (3 , 4))
-
-testReduce : parallelCost (reduce 2) testTree ≡ 2
-testReduce = refl
+-- testReduce : parallelCost (reduce 2) testTree ≡ 2
+-- testReduce = refl
 ```
 # Auxiliary
 Some auxiliary methods that I needed for the proof
 
 ```agda
-maxIdempotent : (n : ℕ) → n ⊔ n ≡ n
-maxIdempotent zero  = refl
-maxIdempotent (suc b) = cong suc (maxIdempotent b)
+-- maxIdempotent : (n : ℕ) → n ⊔ n ≡ n
+-- maxIdempotent zero  = refl
+-- maxIdempotent (suc b) = cong suc (maxIdempotent b)
 
 
 
-addZero : (n : ℕ) → n + 0 ≡ n
-addZero 0 = refl
-addZero (suc n) = cong suc (addZero n)
-```
-
-# Proof
-Prove that it takes `n` time to reduce a tree of height `n` in parallel.
-```agda
-timeReduce : (n : ℕ ) → (t : tree n ℕ) → parallelCost (reduce n) t ≡ n
-timeReduce 0 x = refl
-timeReduce (suc n ) (a , b) rewrite (addZero (parallelCost (reduce n) a)) | (addZero (parallelCost (reduce n ) a )) | (addZero (parallelCost (reduce n) b)) | (timeReduce n a) | (timeReduce n b) | (maxIdempotent n) = refl
+-- addZero : (n : ℕ) → n + 0 ≡ n
+-- addZero 0 = refl
+-- addZero (suc n) = cong suc (addZero n)
 ```
 
 
@@ -122,44 +139,73 @@ I also created the datatype `Equal` to use in `CostLub`. `Equal f g` is the prop
 
 
 ```agda
+open import Felix.Equiv
+-- open Equivalence
+data Cost : {A : Set} → {B : Set} → (A ⇨ B) → A → ℕ →  Set₁ where
+-- the cost of id is 0
+  costId : {C : Set}  →  (x : C)  → Cost id x 0
+-- the exl of id is 0
+  costExl :{C : Set} → {D : Set} → (x : C × D) →  Cost exl x 0
+-- the exr of id is 0
+  costExr :{C : Set} → {D : Set} → (x : C × D) →  Cost exr x 0
+-- the cost of ! is 0
+  cost! : {A : Set} → (x : A) → Cost ! x 0
+  -- cost∘ : {A B C : Set} → (f : B ⇨  C) → (g : A ⇨ B) → (n : ℕ) → (m : ℕ) → (a : A)  → (x : Cost f (evaluate g a) n) → (y : Cost g a m) → Cost (f ∘ g) a (n + m)
+  cost▵  : {A B C : Set} → (f : A ⇨ B) → (g : A ⇨ C) → (n : ℕ) → (m : ℕ) → (a : A)  (x : Cost f a n) → (y : Cost g a m) → Cost (f ▵ g) a (n ⊔ m)
+  cost≈  : {A B : Set} → (x : A) → (n : ℕ) → (f : A ⇨ B) → (g : A  ⇨ B) →  f ≈ g → Cost f x n → Cost g x n
 
-data Equal : {A B : Set} → ( A ⟹ B ) → (A ⟹ B) → Set where
-  refl : {A B : Set}  → (f : A ⟹ B) → Equal f f
-  idright : {A B : Set} → (f : A ⟹ B) → Equal (f m∘ mid) f
-  idleft : {A B : Set} → (f : A ⟹ B) → Equal (mid m∘ f) f
-  assoc : {A B C D : Set} → (f : C ⟹ D) → (g : B ⟹ C) → (h : A ⟹ B) → Equal (f m∘ (g m∘ h)) ((f m∘ g) m∘ h)
-  allTrue : {A : Set} → (f : A ⟹ ⊤ ) → Equal f m!
-  distribTriangle : {A B C : Set} → (f : A ⟹ B) → (g : A ⟹ B) → (h : A ⟹ C) → (k : A ⟹ C) → (Equal f g) → (Equal k h) → Equal (f m▵  k) (g m▵ h)
+
+record CostFunction  {A B : Set} (∥_∥ : A ⇨ B → ℕ) :  Set₁ where
+  field
+    ∥id∥ : ∥ id ∥ ≡ 0
+    ∥exl∥ : ∥ exl ∥ ≡ 0
+    ∥exr∥ : ∥ exr ∥ ≡ 0
+    ∥!∥ : ∥ ! ∥ ≡ 0
+    ∥∘∥ : {A B C : Set} (f : B ⇨ C) (g : A ⇨ B) → ∥ f ∘ g ∥ ≤ ∥ f ∥ + ∥ g ∥
+    ∥▵∥ : {A B C : Set} (f : A ⇨ B) (g : A ⇨ C) → ∥ f ▵ g ∥ ≤ ∥ f ∥ ⊔ ∥ g ∥
+    ∥≈∥ : {A B : Set} (f g : A ⇨ B) → f ≈ g → ∥ f ∥ ≡ ∥ g ∥
+
+-- well orderign
+postulate
+  ∥_∥  : {A B : Set} → A ⇨ B → ℕ
+  ∥id∥ : ∥ id ∥ ≡ 0
+  ∥exl∥ : ∥ exl ∥ ≡ 0
+  ∥exr∥ : ∥ exr ∥ ≡ 0
+  ∥!∥ : ∥ ! ∥ ≡ 0
+  ∥∘∥ : {A B C : Set} (f : B ⇨ C) (g : A ⇨ B) → ∥ f ∘ g ∥ ≤ ∥ f ∥ + ∥ g ∥
+  ∥▵∥ : {A B C : Set} (f : A ⇨ B) (g : A ⇨ C) → ∥ f ▵ g ∥ ≤ ∥ f ∥ ⊔ ∥ g ∥
+  ∥≈∥ : {A B : Set} (f g : A ⇨ B) → f ≈ g → ∥ f ∥ ≡ ∥ g ∥
+
+data WellOrdering : {A B : Set} → (f : A ⇨ B) → (g : A ⇨ B) → (x : A) → Set₁ where
+  <id : {A :  Set} → (f : A ⇨ A ) → (x : A) → WellOrdering id f x
+  <exl : {A B : Set} → (f : (A × B) ⇨ A) → (x : A × B) → WellOrdering exl f x
+  <exr : {A B : Set} → (f : (A × B) ⇨ B) → (x : A × B) → WellOrdering exr f x
+  <! : {A : Set} → (f : A ⇨ ⊤) → (x : A ) → WellOrdering ! f x
+  -- <∘ : {A B C : Set} → (f : B ⇨ C) → (g : A ⇨ C) → WellOrdering
+  --<▵ :
 
 
-testEqual : (f : A ⟹ B) → (g : A ⟹ C) →  Equal ( mexl m∘  (f m▵ g) ) f
-testEqual f g = {! !}
+data WCost : {A : Set} → {B : Set} → (A ⇨ B) → ℕ →  Set₁ where
+-- the cost of id is 0
+  wcostId :  { A : Set} → WCost {A} {A} id 0
+-- the exl of exr is 0
+  wcostExl : {C D : Set} →  WCost {C × D} {C} exl 0
+-- the exr of exr is 0
+  wcostExr : {C D : Set} → WCost {C × D} {D} exr 0
+-- the cost of ! is 0
+  wcost! : {A : Set} →  WCost {A} {⊤} ! 0
+  wcost∘ : {A B C : Set} (f : B ⇨ C) (g : A ⇨ B) (n m : ℕ) → WCost f n → WCost g m → WCost (f ∘ g) (n + m)
+  wcost▵  : {A B C : Set} (f : A ⇨ B) (g : A ⇨ C) (n m : ℕ) → WCost f n → WCost g m → WCost (f ▵ g) (n ⊔ m)
+  wcost≈  : {A B : Set}  (n : ℕ) (f g : A ⇨ B) →  f ≈ g → WCost f n → WCost g n
 
-data CostLub : {A : Set} → {B : Set} → (A ⟹ B) → A → ℕ →  Set₁ where
-  LubId : {C : Set}  → (x : C) → CostLub mid x 0
-  LubExl :{C : Set} → {D : Set} → (x : C × D) →  CostLub mexl x 0
-  LubExr :{C : Set} → {D : Set} → (x : C × D) →  CostLub mexr x 0
-  LubBang : {A : Set} → (x : A) → CostLub m! x 0
-  LubComp : {A B C : Set} → (f : B ⟹ C) → (g : A ⟹ B) → (n : ℕ) → (m : ℕ) → (a : A)  → (x : CostLub f (evaluate g a) n) → (y : CostLub g a m) → CostLub (f m∘ g) a (n + m)
-  LubTriangle : {A B C : Set} → (f : A ⟹ B) → (g : A ⟹ C) → (n : ℕ) → (m : ℕ) → (a : A)  (x : CostLub f a n) → (y : CostLub g a m) → CostLub (f m▵ g) a (n ⊔ m)
-  LubEqual : {A B : Set} → (x : A) → (n : ℕ) → (f : A ⟹ B) → (g : A  ⟹ B) → Equal f g → CostLub f x n → CostLub g x n
 
 
 open import Relation.Binary.PropositionalEquality using (subst)
 
-timeLub : (n : ℕ) → (t : tree n ℕ) → (e : (a : ℕ) → (b :  ℕ) → CostLub madd ( a , b) 1) → CostLub (reduce n) t n
-timeLub 0 a e = LubId a
-timeLub (suc n) ( a , b ) e rewrite (maxIdempotent n) = LubComp madd ( (reduce n  m∘ mexl) m▵ (reduce n m∘ mexr)) 1 n (a , b) (e (evaluate (reduce n) a) (evaluate (reduce n) b))
-  (subst (λ x → (CostLub ((reduce n m∘ mexl) m▵ (reduce n m∘ mexr)) ( a , b ) x)) (maxIdempotent n)
-  (LubTriangle (reduce n m∘ mexl) (reduce n m∘ mexr) n n (a , b) (subst (λ x → CostLub (reduce n m∘ mexl) (a , b) x) (addZero n) ( LubComp (reduce n) mexl n 0 ((a , b)) (timeLub n a e) (LubExl ((a , b))))) (subst (λ x → CostLub (reduce n m∘ mexr) (a , b) x) (addZero n) (LubComp (reduce n) mexr n 0 ((a , b)) (timeLub n b e) (LubExr ( (a , b)))))))
+-- timeLub : (n : ℕ) → (t : tree n ℕ) → (e : (a : ℕ) → (b :  ℕ) → CostLub madd ( a , b) 1) → CostLub (reduce n) t n
+-- timeLub 0 a e = LubId a
+-- timeLub (suc n) ( a , b ) e rewrite (maxIdempotent n) = LubComp madd ( (reduce n  m∘ mexl) m▵ (reduce n m∘ mexr)) 1 n (a , b) (e (evaluate (reduce n) a) (evaluate (reduce n) b))
+--   (subst (λ x → (CostLub ((reduce n m∘ mexl) m▵ (reduce n m∘ mexr)) ( a , b ) x)) (maxIdempotent n)
+--   (LubTriangle (reduce n m∘ mexl) (reduce n m∘ mexr) n n (a , b) (subst (λ x → CostLub (reduce n m∘ mexl) (a , b) x) (addZero n) ( LubComp (reduce n) mexl n 0 ((a , b)) (timeLub n a e) (LubExl ((a , b))))) (subst (λ x → CostLub (reduce n m∘ mexr) (a , b) x) (addZero n) (LubComp (reduce n) mexr n 0 ((a , b)) (timeLub n b e) (LubExr ( (a , b)))))))
 
-
-automaticLub : (expr : A ⟹ B) → (x : A ) → CostLub expr x (parallelCost expr x)
-automaticLub mid x = LubId x
-automaticLub (f m∘ g) x = LubComp f g (parallelCost f (evaluate g x)) (parallelCost g x) x (automaticLub f (evaluate g x)) ( automaticLub g x)
-automaticLub m! x = LubBang x
-automaticLub mexl x = LubExl x
-automaticLub mexr x = LubExr x
-automaticLub (f m▵ g) x = LubTriangle (f) (g) (parallelCost f x) (parallelCost g x) x (automaticLub f x) (automaticLub g x)
-automaticLub madd x = {!!}
 ```
