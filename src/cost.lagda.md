@@ -18,7 +18,7 @@ open import Felix.Raw  -- hiding (_⊎_ ; _×_)
 -- import monoidal operations
 open import monoid -- hiding (a ; b ; c)
 open monoidCategory
-open import Felix.Equiv
+open import Felix.Equiv hiding (sym)
 -- open import Agda.Primitive.Level
 -- open Equivalence
 -- open ≡-Reasoning
@@ -139,7 +139,6 @@ I also created the datatype `Equal` to use in `CostLub`. `Equal f g` is the prop
 
 
 ```agda
-open import Felix.Equiv
 -- open Equivalence
 data Cost : {A : Set} → {B : Set} → (A ⇨ B) → A → ℕ →  Set₁ where
 -- the cost of id is 0
@@ -155,7 +154,7 @@ data Cost : {A : Set} → {B : Set} → (A ⇨ B) → A → ℕ →  Set₁ wher
   cost≈  : {A B : Set} → (x : A) → (n : ℕ) → (f : A ⇨ B) → (g : A  ⇨ B) →  f ≈ g → Cost f x n → Cost g x n
 
 
-record CostFunction  {A B : Set} (∥_∥ : A ⇨ B → ℕ) :  Set₁ where
+record CostFunction  (∥_∥ : {A B : Set} →  A ⇨ B → ℕ) :  Set₁ where
   field
     ∥id∥ : ∥ id ∥ ≡ 0
     ∥exl∥ : ∥ exl ∥ ≡ 0
@@ -175,6 +174,7 @@ postulate
   ∥∘∥ : {A B C : Set} (f : B ⇨ C) (g : A ⇨ B) → ∥ f ∘ g ∥ ≤ ∥ f ∥ + ∥ g ∥
   ∥▵∥ : {A B C : Set} (f : A ⇨ B) (g : A ⇨ C) → ∥ f ▵ g ∥ ≤ ∥ f ∥ ⊔ ∥ g ∥
   ∥≈∥ : {A B : Set} (f g : A ⇨ B) → f ≈ g → ∥ f ∥ ≡ ∥ g ∥
+  ∥add∥ : ∥ madd z ∥ ≡ 1
 
 data WellOrdering : {A B : Set} → (f : A ⇨ B) → (g : A ⇨ B) → (x : A) → Set₁ where
   <id : {A :  Set} → (f : A ⇨ A ) → (x : A) → WellOrdering id f x
@@ -191,7 +191,7 @@ data WCost : {A : Set} → {B : Set} → (A ⇨ B) → ℕ →  Set₁ where
 -- the exl of exr is 0
   wcostExl : {C D : Set} →  WCost {C × D} {C} exl 0
 -- the exr of exr is 0
-  wcostExr : {C D : Set} → WCost {C × D} {D} exr 0
+  wcostExr : {C D : Set} →  WCost {C × D} {D} exr 0
 -- the cost of ! is 0
   wcost! : {A : Set} →  WCost {A} {⊤} ! 0
   wcost∘ : {A B C : Set} (f : B ⇨ C) (g : A ⇨ B) (n m : ℕ) → WCost f n → WCost g m → WCost (f ∘ g) (n + m)
@@ -200,7 +200,15 @@ data WCost : {A : Set} → {B : Set} → (A ⇨ B) → ℕ →  Set₁ where
 
 
 
-open import Relation.Binary.PropositionalEquality using (subst)
+open import Relation.Binary.PropositionalEquality using (subst ; sym)
+
+≤-trans : {m n p : ℕ}  → m ≤ n → n ≤ p → m ≤ p
+≤-trans z≤n       _          =  z≤n
+≤-trans (s≤s m≤n) (s≤s n≤p)  =  s≤s (≤-trans m≤n n≤p)
+costReduce : (n : ℕ) → ∥ reduce n ∥ ≤ n
+costReduce 0  = subst (λ x → x ≤ 0) (sym ∥id∥) z≤n
+costReduce (suc n) = ≤-trans (∥∘∥ (madd z) (twice (reduce n))) {! !}
+
 
 -- timeLub : (n : ℕ) → (t : tree n ℕ) → (e : (a : ℕ) → (b :  ℕ) → CostLub madd ( a , b) 1) → CostLub (reduce n) t n
 -- timeLub 0 a e = LubId a

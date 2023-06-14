@@ -88,8 +88,6 @@ proof (suc n) (a , b) rewrite (proof n a) | (proof n b) | (+-comm (n + snd (redu
       (n  + (snd (reduce n a) ⊔ snd (reduce n b))) + 1
         ≡⟨ +-comm (n + (snd (reduce n a) ⊔  snd (reduce n b))) 1 ⟩
       1 + (n + (snd (reduce n a) ⊔ snd (reduce n b)))
-       ≡⟨⟩
-      suc (n + (snd (reduce n a) ⊔ snd (reduce n b)))
       ∎
 
 ```
