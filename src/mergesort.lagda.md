@@ -51,14 +51,19 @@ mergeL n m = {! !}
 
 
 
+append : (n m : ℕ) → list n A × list m A ⇨ list (n + m) A
+append = {! !}
+
 flatten : (n : ℕ ) →  tree n A ⇨ list (2 ^ n) A
+flatten 0 = id
+flatten (suc n) = (append n n) ∘ (twice (flatten n))
 
 parse : (n : ℕ) → list (2 ^ n) A ⇨ tree n A
 
 
 merge : {A : Set}  → {{ Comparable A  }}  → (n : ℕ) → (tree n A) ⇨ (tree n A)
 merge 0 = id
-merge {A}  (suc n) = (subst (λ m → list m A ⇨ tree n A) {! !} (parse ( n)) ) ∘ (mergeL (2 ^ n) (2 ^ n)) ∘ (twice (flatten n))
+merge {A}  (suc n) = {! !} ∘ (mergeL (2 ^ n) (2 ^ n)) ∘ (twice (flatten n))
 mergesort : {{Comparable A}} → (n : ℕ) → (tree n A) ⇨ (tree n A)
 mergesort 0 = id 
 mergesort (suc n ) = (merge (suc n)) ∘ twice (mergesort n)
