@@ -8,7 +8,7 @@
 open import Data.Nat.Base
 open import Data.Bool
 
-import binary
+import bin2
 module testbinary where
 open import Felix.Object
 open import Felix.Raw
@@ -80,26 +80,26 @@ instance
 import Data.List as Ls
 
 
-open binary ⦃ ps2 ⦄ ⦃ cps2 ⦄ ⦃ cat ⦄ ⦃ catcar ⦄ ℕ Bool
+open bin2 ⦃ ps2 ⦄ ⦃ cps2 ⦄ ⦃ cat ⦄ ⦃ catcar ⦄ ℕ Bool
 --   using (List; [];)
 
 
-range : ℕ → Ls.List (Bits 3)
-range 0 = Ls.[]
-range (suc n ) = Ls._∷_ (NatToLittleEndian 3 n)  (range n)
+-- range : ℕ → Ls.List (Bits 3)
+-- range 0 = Ls.[]
+-- range (suc n ) = Ls._∷_ (NatToLittleEndian 3 n)  (range n)
 
-end : Bits 0
-end = v.lift u.tt
+-- end : Bits 0
+-- end = v.lift u.tt
 
-list : Bits 2
-list = true , true ,  end
+list : Bits 1
+list = true , true
 
 test : ℕ
-test  = LittleEndianToNat 2 list
+test  = LittleEndianToNat {1} list
 
 
 bits : Bits 4
-bits = NatToLittleEndian 4 4
+bits = NatToLittleEndian {4} 4
 
 
 import Relation.Binary.PropositionalEquality as Eq
@@ -115,27 +115,27 @@ t3 = Eq.refl
 t4 : halfAdder (true , true)  ≡ (false , true)
 t4 = Eq.refl
 
-t5 : fullAdder ((false , false) , false)  ≡ (false , false)
+t5 : fullAdder (false , false , false)  ≡ (false , false)
 t5 = Eq.refl
 
-t13 : fullAdder ((true , false) , false)  ≡ (true , false)
+t13 : fullAdder (true , false , false)  ≡ (true , false)
 t13 = Eq.refl
-t6 : fullAdder ((false , true) , false)  ≡ (true , false)
+t6 : fullAdder (false , true , false)  ≡ (true , false)
 t6 = Eq.refl
-t7 : fullAdder ((false , false) , true)  ≡ (true , false)
+t7 : fullAdder (false , false , true)  ≡ (true , false)
 t7 = Eq.refl
-t8 : fullAdder ((true , true) , false)  ≡ (false , true)
+t8 : fullAdder (true , true , false)  ≡ (false , true)
 t8 = Eq.refl
-t9 : fullAdder ((false , true) , true)  ≡ (false , true)
+t9 : fullAdder (false , true , true)  ≡ (false , true)
 t9 = Eq.refl
-t10 : fullAdder ((true , false) , true)  ≡ (false , true)
+t10 : fullAdder (true , false , true)  ≡ (false , true)
 t10 = Eq.refl
-t11 : fullAdder ((true , true) , true)  ≡ (true , true)
+t11 : fullAdder (true , true , true)  ≡ (true , true)
 t11 = Eq.refl
 
 
 testAdd : ℕ
-testAdd  = LittleEndianToNat 4 (rippleAddLittleEndianNoCarry 3 (NatToLittleEndian 3 3 , NatToLittleEndian 3 5))
+testAdd  = LittleEndianToNat {4} (RippleAdd {3} (NatToLittleEndian {3} 3 , NatToLittleEndian {3} 5))
 
 
 

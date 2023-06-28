@@ -10,6 +10,8 @@ open import Data.List
 open import Data.String
 open import Felix.Object hiding (⊤ ; _×_)
 open import Felix.Raw hiding (⊤ ; _×_)
+open import Category.Monad
+open RawMonad
 Port : Set
 Port = ℕ
 
@@ -21,26 +23,44 @@ data Ports : Set →  Set₁ where
 
 -- data Comp  : Set → Set₁ → Set₁  Set₁ where
 --  mkComp : {a b : Set} → Comp String (Ports a) (Ports b)
-Comp : Set₁
-Comp = {A B : Set} → String × (Ports A) × (Ports B)
+data Comp : Set₁ where
+  mkComp : {A B : Set} → String → (Ports A) → (Ports B) → Comp
 
-State : Set₁ → Set₁ → Set₁
-State A B = A → (A × B)
+-- State : Set₁ → Set₁ → Set₁
+-- State A B = A → (A × B)
+
+data _→S_ : Set₁ → Set₁ → Set₁ where
+  State : {A B : Set₁} → (A → A × B) → (A →S B)
 
 GraphM : Set₁ →  Set₁
-GraphM  A = Port → State (Port × (List Comp)) A
+GraphM  A =  (Port × (List Comp)) →S A
 
-_→G_ : Set → Set → Set₁
-A →G B = Ports A → GraphM (Ports B)
+data _→G_ : Set → Set → Set₁ where
+  Graph : {A B : Set} → (Ports A → GraphM (Ports B)) → A →G B
 
 
-graphid : {A : Set} →  Ports A → Port → (Port × List Comp) →  ((Port × List Comp) × (Ports A))
-graphid portsA port (port1 , listcomp) = ((port , listcomp) ,  portsA)
+graphid : {A : Set} →  A →G A
+graphid = Graph ( λ portsA → (State (λ (port , listcomp) → (( port , listcomp  ) , portsA ) )  ))
+
+
+graph∘ : {A B C : Set} → (B →G C) → (A →G B) → (A →G C)
+graph∘ (Graph bc) (Graph ab) = Graph (λ portsA  → State λ (port , listcomp ) → ((port , listcomp) , (ab portsA) ) )
+  where
+    State f = ab portsA
+    ((port2 , listcomp2), portsB) = f portsA
+    State g = {! !}
+
+
+
+-- graph∘ : {A B C : Set} → (Ports A → Port → (Port × List Comp) → (Port × List Comp ) × Port B) →r
 
 instance
+  monad : RawMonad GraphM
+
   CatGraph : Category _→G_
   CatGraph = record {
-    id = graphid
+    id =  graphid --Graph return
+    -- ; _∘_ = graph∘
     }
 
 ```
