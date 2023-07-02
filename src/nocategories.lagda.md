@@ -134,6 +134,7 @@ aux2 = {! !}
 -- lem1 : ⟦ (c xor a) xor b ⟧ + ⟦ c ∧ a ∨  (c xor b)
 
 open ≡-Reasoning
+-- not done yet
 rippleAdderSpec : ⟦ c +B A +B B ⟧ ≡ ⟦ c ⟧ + ⟦ A ⟧ + ⟦ B ⟧
 rippleAdderSpec {c} {0} {[]} {[]} rewrite  +-identityʳ ⟦ c ⟧ = sym (+-identityʳ (if c then 1 else 0))
 rippleAdderSpec {c} {suc n} {a ∷ A} {b ∷ B} rewrite fullAdderSpec {c} {a} {b}
