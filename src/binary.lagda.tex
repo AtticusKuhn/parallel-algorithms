@@ -1,0 +1,371 @@
+Switching course, I will explore binary arithmetic at first.
+
+
+
+
+# Imports
+\begin{code}
+
+{-# OPTIONS --allow-unsolved-metas #-}
+open import Data.Nat.Base using (ℕ ; suc ; _+_ ; _^_ ; ⌊_/2⌋ )
+open import Felix.Object using (Products ;  Coproducts ;   _×_ ; ⊤ ; _⊎_)
+open import Felix.Raw using (Category ; Cartesian ; Cocartesian ; id ; _∘_ ; _▵_ ; twice ; _⊗_ ; inl ; inr ; ! ; _▿_ ; exl ; exr ; first ; second ; assocʳ ; assocˡ ;inAssocʳ′ ; transpose ;  dup ; swap ;   unitorⁱʳ ; constʳ ; inSwap; inAssocˡ′)
+open import Relation.Binary.PropositionalEquality using (cong ; _≡_ ; subst)
+open import Felix.Equiv using ( Equivalent)
+import Felix.Laws as L using (Cartesian ; Category)
+-- open import hasparity using (HasParity)
+open import numbers using (Number)
+-- open import euclideanDomain using (EuclideanDomain)
+open import bitoperations using (HasBitOperations)
+open import functor using (Functor)
+
+\end{code}
+
+# Module declaration and Instances
+\begin{code}
+
+module binary
+       {lvl}
+       { S : Set lvl }
+     -- (A : Set)
+       {{ps : Products S }}
+       {{cps : Coproducts S }}
+     {_⇨_ : S  → S  → Set} (let infix 0 _⇨_; _⇨_ = _⇨_)
+     ⦃ x : Category _⇨_ ⦄ ⦃ y : Cartesian _⇨_ ⦄ ⦃ z : Cocartesian _⇨_ ⦄
+
+         {{ equiv : Equivalent Agda.Primitive.lzero _⇨_ }}
+         ⦃ cateq : L.Category _⇨_ ⦄
+         ⦃ carteq : L.Cartesian _⇨_ ⦄
+         (N : S)
+         (Bit : S)
+         {{bitops : HasBitOperations Bit}}
+         {{parity : Number {{x = x}} N}}
+         {{f : Functor {lvl = lvl} {S = S} ⦃ x = x ⦄ ⦃ ps = ps ⦄ ⦃ y = y ⦄ ⦃ equiv = equiv ⦄  ⦃ num = parity ⦄ }}
+         -- ⦃ ed : EuclideanDomain N ⦄
+
+     where
+
+open HasBitOperations bitops
+open Number parity
+open Functor f
+open Equivalent equiv
+open L.Cartesian carteq
+open L.Category cateq
+-- open EuclideanDomain ed
+-- Bit : S
+-- Bit = N
+\end{code}
+
+
+# Declare Varaibles
+\begin{code}
+variable
+  A B C D : S
+  b : ℕ
+
+\end{code}
+
+
+# Define Bits
+We will represent binary numbers as a list of bits
+\begin{code}
+List : ℕ → S → S
+List 0 A = ⊤
+List (suc n) A = A × (List n A)
+
+Bits : ℕ → S
+Bits n = List n Bit
+
+
+\end{code}
+
+# Convert Between Numbers and Little Endian Representations
+Define the denotation function to convert between numbers and our binary representation of numbers. We are representing binary numbers as a little endian list of bits.
+%<*Conversions>
+\begin{code}
+
+NatToLittleEndian : (b : ℕ) →  N ⇨ Bits b
+NatToLittleEndian 0 =  !
+NatToLittleEndian (suc b) = %2 ▵ (NatToLittleEndian b ∘ /2)
+
+
+LittleEndianToNat : (b : ℕ) → Bits b ⇨ N
+LittleEndianToNat  0 = p0
+LittleEndianToNat (suc b) =   add ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b ))
+\end{code}
+%</Conversions>
+
+prove the the two functions are naturally isomorphic (they are inverses)
+
+\begin{code}
+--- todo
+open ≈-Reasoning
+
+-- ≈cong : {f g : A ⇨ B} → (evidence : f ≈ g) →
+open import Data.Product using (_,_) renaming (_×_ to _×ₚ_)
+
+
+!∘ : {A : S} {f : A ⇨ ⊤} → ! ∘ f ≈ !
+!∘ = trans (trans (∀⊤) (sym ∀⊤)) (identityʳ)
+
+ifconstr : {A B : S} {g h : ⊤ ⇨ A} {f : A ⇨ B} → f ∘ if ∘ constʳ (g ▵ h) ≈ if ∘ constʳ ((f ∘ g) ▵ (f ∘ h))
+ifconstr {A} {B} {g} {h} {f} = {! !} -- begin
+  -- f ∘ if ∘ ( _∘_  (first (g ▵ h))  (id ▵ !) )
+  -- -- ≈⟨ ∘-assocˡ ⟩
+  -- -- (f ∘ if) ∘ constʳ (g ▵ h)
+  -- -- ≈⟨ ∘≈ˡ (ifdistrib) ⟩
+  -- -- (f ∘ second (twice f)) ∘ constʳ (g ▵ h)
+  -- -- ≈⟨ ∘-assocʳ ⟩
+  -- -- f ∘ second (twice f) ∘ constʳ (g ▵ h)
+  -- -- ≡⟨⟩
+  -- -- f ∘ second (twice f) ∘ second (g ▵ h) ∘ unitorⁱʳ
+  -- -- ≈⟨ ∘≈ˡ ∘-assocˡ ⟩
+  -- -- f ∘ (second (twice f) ∘ second (g ▵ h)) ∘ unitorⁱʳ
+  -- ≈⟨ {! !} ⟩
+  -- if ∘ constʳ ((_∘_ f g) ▵ (f ∘ h))
+  -- ∎
+-- begin
+ -- ! ∘ f
+ -- ≈⟨ ∘≈ˡ (trans (∀⊤) (sym ∀⊤)) ⟩
+ -- ! ∘ id
+--  ≈⟨ identityʳ ⟩
+ -- !
+  -- ∎
+postulate
+  eq : {A B : S} {f g : A ⇨ B} →  f ≈ g →  f ≡ g
+
+
+-- inverses2 : (b : ℕ) → (NatToLittleEndian b ∘ LittleEndianToNat b ≈ id)
+-- inverses2 0 = trans ∀⊤ (sym ∀⊤)
+
+inverses : (b : ℕ) → (NatToLittleEndian b ∘ LittleEndianToNat b ≈ id)
+inverses 0 = trans ∀⊤ (sym ∀⊤)
+inverses (suc b)  = begin
+         NatToLittleEndian (suc b) ∘ LittleEndianToNat (suc b)
+         ≡⟨⟩
+          (%2 ▵ (NatToLittleEndian b ∘ /2)) ∘  (add ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b )))
+        ≈⟨ ▵∘ ⟩
+          (%2 ∘  add ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b )) ) ▵ ((NatToLittleEndian b ∘ /2) ∘  add ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b )))
+        ≈⟨ ▵≈ (begin
+        %2 ∘  add ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b ))
+        ≈⟨ ∘-assocˡ ⟩
+        (%2 ∘  add) ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b ))
+        ≈⟨ ∘≈ˡ (distrib) ⟩
+        (  xor ∘ twice %2) ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b ))
+        ≈⟨ ∘-assocʳ ⟩
+          xor ∘ twice %2 ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b ))
+        ≈⟨ ∘≈ʳ ⊗∘⊗ ⟩
+          xor ∘  ((%2 ∘ if ∘ constʳ (p1 ▵ p0))  ⊗ (%2 ∘ *2 ∘ LittleEndianToNat b ))
+
+        ≈⟨ ∘≈ʳ (⊗≈ (begin
+        %2 ∘ if ∘ constʳ (p1 ▵ p0)
+        ≈⟨ ∘-assocˡ ⟩
+        (%2 ∘ if) ∘ constʳ (p1 ▵ p0)
+        ≈⟨ ∘≈ˡ (ifdistrib) ⟩
+        (if ∘ second (twice %2)) ∘ constʳ (p1 ▵ p0)
+        ≈⟨ ∘-assocʳ ⟩
+        if ∘ second (twice %2) ∘ constʳ (p1 ▵ p0)
+        ≈⟨ ∘≈ʳ ∘-assocˡ ⟩
+        if ∘ (second (twice %2) ∘  second (p1 ▵ p0)) ∘ unitorⁱʳ
+        ≈⟨ ∘≈ʳ (∘≈ˡ (second∘second)) ⟩
+        if ∘ (second (twice %2 ∘ (p1 ▵ p0))) ∘ (id ▵ !)
+        ≈⟨ ∘≈ʳ (second∘▵) ⟩
+        if ∘ (id ▵ (twice %2 ∘ (p1 ▵ p0)) ∘ !  )
+        ≈⟨ ∘≈ʳ (▵≈ʳ (∘≈ˡ (⊗∘▵))) ⟩
+        if ∘ (id ▵ ( ( (%2 ∘ p1) ▵ (%2 ∘ p0))) ∘ !  )
+        ≈⟨ ∘≈ʳ (▵≈ʳ (∘≈ˡ (▵≈ oneodd zeroeven ))) ⟩
+        if ∘ (id ▵ ( ( bit1 ▵ bit0) ∘ !  ))
+        ≈⟨ ∘≈ʳ {!!} ⟩
+        if ∘ constʳ (bit1 ▵ bit0)
+        ∎
+        ){!!}) ⟩
+        xor ∘ ( (if ∘ constʳ (bit1 ▵ bit0)) ⊗  (bit0 ∘ ! ))
+        ≈⟨ {! !} ⟩
+        exl ∘ id
+        ∎
+        )
+
+        (begin
+          (NatToLittleEndian b ∘ /2) ∘  add ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b ))
+          ≈⟨  assoc ⟩
+          NatToLittleEndian b ∘ (/2 ∘  (add ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b ))))
+          ≈⟨  ∘≈ʳ ∘-assocˡ ⟩
+          NatToLittleEndian b ∘ ((/2 ∘  add) ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b )))
+          ≈⟨ ∘≈ʳ (∘≈ˡ push)⟩
+          NatToLittleEndian b ∘ ((add ∘ twice /2) ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b )))
+          ≈⟨ ∘≈ʳ ∘-assocʳ ⟩
+          NatToLittleEndian b ∘ (add ∘ (twice /2 ∘ ((if ∘ constʳ (p1 ▵ p0))  ⊗ (*2 ∘ LittleEndianToNat b ))))
+          ≈⟨ ∘≈ʳ (∘≈ʳ ⊗∘⊗) ⟩
+          NatToLittleEndian b ∘ (add ∘ ( ( (/2 ∘ (if ∘ constʳ (p1 ▵ p0)))  ⊗ ( /2 ∘ *2 ∘ LittleEndianToNat b ))))
+          ≈⟨ ∘≈ʳ (∘≈ʳ (⊗≈
+            (begin
+            /2 ∘ if ∘ constʳ (p1 ▵ p0)
+            ≈⟨ ∘-assocˡ ⟩
+            (/2 ∘ if) ∘ constʳ (p1 ▵ p0)
+            ≈⟨ ∘≈ˡ ifdistrib ⟩
+            (if ∘ second (twice /2)) ∘ constʳ (p1 ▵ p0)
+            ≈⟨ ∘-assocʳ ⟩
+            if ∘ second (twice /2) ∘ (second (p1 ▵ p0) ∘ (id ▵ !))
+            ≈⟨ ∘≈ʳ ∘-assocˡ ⟩
+             if ∘ (second (twice /2) ∘ second (p1 ▵ p0)) ∘ (id ▵ !)
+             ≈⟨ ∘≈ʳ (∘≈ˡ second∘second) ⟩
+            -- ≈⟨ ∘≈ʳ (∘≈ˡ (second∘second)) ⟩
+            if ∘ second (twice /2 ∘ (p1 ▵ p0)) ∘ (id ▵ !)
+            ≈⟨ ∘≈ʳ (second∘▵) ⟩
+            if ∘ (id ▵ ((twice /2 ∘ (p1 ▵ p0)) ∘ !))
+            ≈⟨ ∘≈ʳ (▵≈ʳ (∘≈ˡ ⊗∘▵)) ⟩
+            if ∘ (id ▵ (( (( /2 ∘ p1 ) ▵ ( /2 ∘ p0 ))) ∘ !))
+            ≈⟨ ∘≈ʳ (▵≈ʳ (∘≈ˡ (▵≈ (p1/2) (p0/2)))) ⟩
+            if ∘ (id ▵ (( ( p0  ▵ p0) ∘ !)))
+            ≈⟨ ∘≈ʳ (▵≈ʳ (▵∘)) ⟩ -- ▵∘
+            if ∘ (id ▵ (( ( (p0 ∘ !)  ▵ (p0 ∘ !)) )))
+            -- ≈⟨ ∘≈ʳ (▵≈ʳ ( ▵≈ (∘≈ʳ (sym (∀⊤))) (∘≈ʳ (sym (∀⊤))) )) ⟩
+            -- if ∘ (id ▵ (( ( (p0  ∘ exl)  ▵ (p0 ∘  exr)) )))
+            -- ≈⟨ ∘≈ʳ (▵≈ʳ (▵≈ {! !}  {! !} ) )  ⟩
+            -- if ∘ (id ▵ (( ( (p0 ∘ exl)  ▵ (p0 ∘ exr)) )))
+            -- ≈⟨ sym (ifdistrib) ⟩
+            -- (p0 ∘ !) ∘ if
+            ≈⟨ {! !} ⟩
+            -- ≈⟨ ∘≈ʳ (▵≈ʳ ∘-assocˡ) ⟩
+            -- if ∘ (id ▵ ((twice /2 ∘ (p1 ▵ p0)) ∘ !))
+            -- ≈⟨ ∘-assocʳ ⟩
+            -- p0 ∘ ! ∘ if
+            -- ≈⟨ ∘≈ʳ (!∘ ) ⟩
+             p0 ∘ !
+            ∎
+            )
+            (begin
+                 /2 ∘ *2 ∘ LittleEndianToNat b
+               ≈⟨ ∘-assocˡ ⟩
+               (/2 ∘ *2) ∘ LittleEndianToNat b
+               ≈⟨ ∘≈ˡ /2∘*2 ⟩
+               id ∘ LittleEndianToNat b
+               ≈⟨ identityˡ ⟩
+               LittleEndianToNat b
+             ∎
+          )  ) ) ⟩
+          NatToLittleEndian b ∘ (add ∘ (( p0 ∘ !)  ⊗  LittleEndianToNat b))
+          ≈⟨ {! ∘≈ʳ addIdLeft!} ⟩
+
+          NatToLittleEndian b ∘   LittleEndianToNat b ∘ exr
+          ≈⟨ ∘-assocˡ ⟩
+
+          (NatToLittleEndian b ∘   LittleEndianToNat b) ∘ exr
+          ≈⟨ ∘≈ˡ (inverses b) ⟩
+          id ∘ exr
+          ≈⟨ identityˡ ⟩
+          exr
+          ≈⟨ sym (identityʳ ) ⟩
+          exr ∘ id
+        ∎
+        )⟩
+        (exl ∘ id) ▵ (exr ∘ id)
+        ≈⟨ sym (  ∀×← ( refl , refl ) ) ⟩
+        id
+  ∎
+\end{code}
+
+# Adder
+
+Define a half adder.
+
+Note that for convention, the left output is the sum and the right output is the carry.
+%<*HalfAdder>
+\begin{code}
+halfAdder : Bit × Bit  ⇨ Bit × Bit
+halfAdder  = xor ▵ and
+\end{code}
+%</HalfAdder>
+Define a ful adder.
+
+Note that for convention, the left output is the sum and the right output is the carry.
+%<*FullAdder>
+\begin{code}
+fullAdder : (Bit × Bit) × Bit ⇨ Bit × Bit
+fullAdder =   first or ∘ inSwap (inAssocˡ′ (first halfAdder)) ∘  first halfAdder
+\end{code}
+%</FullAdder>
+
+Specification that half adder and full adder are correct.
+
+The specification for the half adder says that if I add two bits, that should be the same as putting the two bits through a half-adder and then converting the result to a number.
+
+The specification for the full adder says that if I have any three bits, adding them should be the same as inputting them to the full-adder and then converting the result to a number.
+
+%<*HAS>
+\begin{code}
+halfAdderSpecification :   second exl ∘  (NatToLittleEndian 2) ∘ add ≈ halfAdder ∘ twice %2
+halfAdderSpecification = trans (begin
+  second exl ∘ NatToLittleEndian 2 ∘ add
+  ≈⟨ ∘-assocˡ ⟩
+  (second exl ∘ NatToLittleEndian 2) ∘ add
+  ≈⟨ ∘≈ˡ (second∘▵) ⟩
+  ( %2 ▵ ( exl ∘ ( %2 ▵ ( ! ∘ /2 ) ) ∘ /2 )  ) ∘ add
+  ≈⟨ ∘≈ˡ (▵≈ʳ ∘-assocˡ ) ⟩
+  ( %2 ▵ ( (exl ∘ ( %2 ▵ ( ! ∘ /2 ) )) ∘ /2 )  ) ∘ add
+  ≈⟨ ∘≈ˡ (▵≈ʳ (∘≈ˡ exl∘▵) ) ⟩
+  ( %2 ▵ (  %2 ∘ /2 )  ) ∘ add
+  ≈⟨ ▵∘ ⟩
+  (%2 ∘ add) ▵ (  (%2 ∘ /2 ) ∘ add  )
+  ≈⟨ ▵≈ʳ ∘-assocʳ ⟩
+   (%2 ∘ add) ▵ (%2 ∘ /2 ∘ add)
+  ∎) (sym (begin
+  halfAdder ∘ twice %2
+  ≈⟨ ▵∘ ⟩
+  (xor ∘ twice %2) ▵ (and ∘ twice %2)
+  ≈⟨ ▵≈ ( sym (distrib) ) distrib/2 ⟩
+   (%2 ∘ add) ▵ (%2 ∘ /2 ∘ add)
+  ∎))
+\end{code}
+%</HAS>
+
+\begin{code}
+fullAdderSpecification :  fullAdder ∘ (twice %2 ⊗ %2)  ≈ second exl ∘  (NatToLittleEndian 2) ∘ add ∘ first add
+fullAdderSpecification =  {! !}
+
+\end{code}
+
+Define some utility functions
+\begin{code}
+scoop :  (A × B) × (C × D) ⇨ ((A × B) × D) × C
+scoop =  ((exl ∘ exl ▵ exr ∘ exl) ▵ ( exr ∘ exr)) ▵ (exl ∘ exr)
+
+
+blender :  (A × B) × C ⇨ (A × C) × B
+blender = inAssocʳ′ (second (swap))
+\end{code}
+
+Use ripple addition to add two `b` bit little endian representations of binary numbers.
+\begin{code}
+
+zip : (length : ℕ) → List length A × List length B ⇨ List length (A × B)
+zip 0 = !
+zip (suc length) =  second (zip length) ∘ transpose
+
+genericRipple : (length : ℕ) → (A × B) × C ⇨ D × C → (List length (A × B)) × C ⇨ (List length D) × C
+genericRipple 0 f = ! ⊗ id
+genericRipple (suc length) f = inAssocʳ′ (second (genericRipple length f ∘ swap))  ∘ first f ∘ inAssocʳ′ (second swap)
+
+
+rippleAddLittleEndian : (b : ℕ) → ((Bits b) × (Bits b)) × Bit ⇨ (Bits b) × Bit
+rippleAddLittleEndian b = genericRipple b fullAdder ∘ first (zip b)
+\end{code}
+Make a variation with no carry bit
+
+\begin{code}
+
+-- snoc is "cons" backwards and appends an element to the end of a list
+snoc : (length : ℕ) → List length A × A ⇨ List (suc length) A
+snoc 0 = swap
+snoc (suc length) = second (snoc length) ∘ assocʳ
+rippleAddLittleEndianNoCarry : (b : ℕ) → (Bits b) × (Bits b) ⇨ (Bits (suc b))
+rippleAddLittleEndianNoCarry b  = (snoc b) ∘ (rippleAddLittleEndian b) ∘ constʳ bit0
+\end{code}
+
+Specification of ripple addition
+
+\begin{code}
+rippleAddSpecification : (b : ℕ ) → LittleEndianToNat (suc b) ∘ rippleAddLittleEndianNoCarry b ≈ add ∘ twice (LittleEndianToNat b)
+rippleAddSpecification b = {!  !}
+
+\end{code}
