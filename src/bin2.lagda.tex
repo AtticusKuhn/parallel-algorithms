@@ -64,7 +64,7 @@ open L.Category cateq
 \begin{code}
 variable
   A B C D : S
-  b : ℕ
+  a b : ℕ
 \end{code}
 
 
@@ -268,13 +268,38 @@ mulDigit {0} = and
 mulDigit {suc n} = (and ⊗ mulDigit {n}) ∘ transpose ∘ first dup
 \end{code}
 %</MulDigit>
-
+%<*MulDigitSpec>
 \begin{code}
--- mulDigitSpec : (bitToNat ⊗ LittleEndianToNat {b}) ∘ mulDigit ≈ mul
+mulDigitSpec : LittleEndianToNat {b} ∘ mulDigit {b} ≈   mul ∘ (bitToNat ⊗ LittleEndianToNat {b})
 \end{code}
+%</MulDigitSpec>
+\begin{code}
+mulDigitSpec  = {! !}
+\end{code}
+
+
+
 
 \begin{code}
 longMultiplication : Bits b × Bits b ⇨ Bits ( b + b )
 longMultiplication {0} = and
 longMultiplication {suc n} = {! !}
+
+
+
+snoc0 :  Bits b ⇨ Bits (suc b)
+snoc0 {0} = constʳ bit0
+snoc0 {suc b} = second (snoc0 {b})
+snoc0a : {a b : ℕ} → Bits b ⇨ Bits (a + b)
+snoc0a {a = 0} {b} = id
+snoc0a {a = suc c} {b} = snoc0 {c + b} ∘ snoc0a {a = c} {b = b}
+
+shift : Bits b ⇨ Bits (suc b)
+shift = constˡ bit0
+
+shiftAdd : Bits b × Bits (a + b) ⇨ Bits (suc (a + b))
+shiftAdd {b} {a} =  exr ∘ RippleAdd {suc (a + b) } ∘  (snoc0a {suc a} ⊗ shift {a + b})
+mulAsym : Bits a × Bits b ⇨ Bits (suc (a + b))
+mulAsym {0} {b} = snoc0 {b} ∘ mulDigit {b}
+mulAsym {suc a} {b} =  shiftAdd {b = b} {a =  suc a}  ∘ ( mulDigit {b} ⊗ mulAsym {a} {b} )∘ transpose ∘ second dup
 \end{code}

@@ -23,7 +23,8 @@ import Felix.Instances.Function.Laws as LI
 import Data.Unit as u
 import Level as v
 open import bitoperations
-open import hasparity
+-- open import hasparity
+open import numbers
 open import functor
 
 
@@ -61,7 +62,7 @@ instance
     ; or = λ A → (fst A) ∨ (snd A)
     ; if = λ A → if (fst A) then (fst (snd A)) else (snd (snd A))
     }
-  par : HasParity ℕ
+  par : Number ℕ
   par = record {
     p0 = λ u → 0
     ; p1 = λ u → 1
@@ -136,6 +137,12 @@ t11 = Eq.refl
 
 testAdd : ℕ
 testAdd  = LittleEndianToNat {4} (RippleAdd {3} (NatToLittleEndian {3} 3 , NatToLittleEndian {3} 5))
+
+testMul : ℕ
+testMul  = LittleEndianToNat {7} (mulAsym {3} {3} (NatToLittleEndian {3} 11 , NatToLittleEndian {3} 14))
+
+testMulb : Bits 7
+testMulb  = mulAsym {3} {3} (NatToLittleEndian {3} 11 , NatToLittleEndian {3} 14)
 
 
 

@@ -56,7 +56,11 @@ SHOWPDF=zathura
 %.see: latex/%.pdf
 	${SHOWPDF} $<
 
+%.seep: latex/%.pdf
+	${SHOWPDF} --mode=presentation $<
+
 see: $(PAPER).see
+seetalk: $(TALK).seep
 
 clean:
 	rm -rf _build latex
