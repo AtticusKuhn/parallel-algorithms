@@ -66,9 +66,10 @@ A +H B = [ A xor B ,,  A ∧ B ]
 ∧* : ⟦ a ∧ b ⟧ ≡ ⟦ a ⟧ * ⟦ b ⟧
 ∧* {false} {b} = refl
 ∧* {true} {b} = sym (+-identityʳ ⟦ b ⟧)
-xor+ : ⟦ a ∧ b ⟧ ≡ ⟦ a ⟧ * ⟦ b ⟧
+-- this is not true
+xor+ : ⟦ a xor b ⟧ ≡ ⟦ a ⟧ + ⟦ b ⟧
 xor+ {false} {b} = refl
-xor+ {true} {b} = sym (+-identityʳ ⟦ b ⟧)
+xor+ {true} {b} = {! !}
 
 halfAdderSpec : ⟦ a +H b ⟧ ≡ ⟦ a ⟧ + ⟦ b ⟧
 halfAdderSpec {false} {false} = refl
@@ -185,6 +186,10 @@ A << (suc n) = false ∷ A << n
 _*Ba_ : Bits n → Bits m → Bits (n + m)
 [] *Ba B =  B
 _*Ba_ {n = suc n} (a ∷ A) B = false +B ( a *S B ) << n  +B (A *Ba B)
+
+-- not done yet
+mulSpec : ⟦ A *Ba B ⟧ ≡ ⟦ A ⟧ * ⟦ B ⟧
+mulSpec = {! !}
 
 
 example* : ⟦ [ true ] *Ba [  true ] ⟧ ≡ 2
