@@ -13,13 +13,16 @@
                , caption, subcaption, natbib }
 
 \usetheme[
-  % block=fill,
-  % background=light,
-  % titleformat=smallcaps,
-  % progressbar=frametitle,
-  % numbering=none,
+   block=fill,
+   background=light,
+   titleformat=smallcaps,
+   progressbar=frametitle,
+   numbering=none,
 ]{metropolis}%Warsaw,Madrid
 \setbeamersize{text margin left=.5cm,text margin right=.5cm}
+
+\usepackage[pdf]{graphviz}
+\usepackage{tikz-cd}
 
 %% \renewcommand\alert[1]{\textcolor{mLightBrown}{#1}}
 
@@ -47,11 +50,268 @@
 \setbeamerfont{title}{size=\Large}
 \setbeamerfont{subtitle}{size=\large}
 \end{center}
+\section{Preliminaries}
+\begin{frame}{About Denotational Design}
 
-\begin{frame}{Hello!}
+  \begin{defn}
+    \textbf{Denotational Design} is a type of thinking that prioirtizes thinking about the meaning and creating precise and elegant specifications using tools from abstract algebra and category theory.
+\end{defn}
 
-That's it!
+\begin{notn}
+  In denotational design, the function $\llbracket \cdot \rrbracket$ is used to take any object to its meaning.
+\end{notn}
+\end{frame}
+
+\begin{frame}{Why Computer Arithmetic}
+  Reasons why I chose computer arithmetic
+  \begin{enumerate}
+          \pause \item It is elementary; Most people have some exposure
+          \pause \item It is a good way to show denotational design
+    \end{enumerate}
+    \pause The focus is not on any specific circuit component, but on specifications as to why it is \textbf{correct}
+\end{frame}
+
+\begin{frame}{Simplifications}
+  For the purposes of this talk, I simplified from my paper:
+  \begin{enumerate}
+          \pause \item In my paper, I used the computer theorem prover language \textbf{Agda} to prove my propositions correct. You do not need to know programming for this talk.
+          \pause \item In my paper, I talked about category theory, but for the sake of this talk, just imagine everything is occuring in the category of functions.
+        \end{enumerate}
+\end{frame}
+
+
+\begin{frame}{Binary Basics}
+
+We will represent binary numbers as lists of bits, where the least significant bit is on the left (little endian encoding).
+
+As an additional preliminary, we expect the reader to be familiar with common bitwise operations, including $\cdot \oplus \cdot$, $\cdot \lor \cdot$, and $\cdot \land \cdot$ (see table~\ref{table:bitops}).
+\begin{notn}
+  We use $N$ to denote our number system, we use $\mathbb{B}$ to represent a bit,  and we use $\mathbb{B}^{n}$ to denote an $n$-bit representation.
+\end{notn}
+\begin{table}[h]
+\centering
+\begin{tabular}{||c c c||}
+ \hline
+ $\cdot \oplus \cdot$ & $\cdot \lor \cdot$ & $\cdot \land \cdot$  \\ [0.5ex]
+ \hline\hline
+ $0 \oplus 0 = 0$ & $0 \lor 0 = 0$ & $0 \land 0 = 0$ \\
+ $0 \oplus 1 = 1$ & $0 \lor 1 = 1$ & $0 \land 1 = 0$ \\
+ $1 \oplus 0 = 1$ & $1 \lor 0 = 1$ & $1 \land 0 = 0$ \\
+ $1 \oplus 1 = 0$ & $1 \lor 0 = 1$ & $1 \land 1 = 1$ \\
+ \hline
+\end{tabular}
+\caption{$\cdot \oplus \cdot$, $\cdot \lor \cdot$, and $\cdot \land \cdot$}
+\label{table:bitops}
+\end{table}
+
+
 
 \end{frame}
 
+\section{Addition}
+
+\begin{frame}{Converting $\mathbb{B}^{n}$ to $N$ }
+  Anything we do is only correct modulo our meaning function $\llbracket \cdot \rrbracket$.
+  \begin{equation}
+    \llbracket b_{0} b_{1} b_{2} \ldots b_{n-1} \rrbracket = \llbracket b_{0} \rrbracket + 2 \llbracket b_{1} \rrbracket + 4 \llbracket b_{2} \rrbracket + \cdots + 2^{n-1} \llbracket b_{n-1 } \rrbracket
+\end{equation}
+ \begin{figure}
+   \digraph[width=\textwidth]{conversions}{
+  node [shape=Mrecord]
+  rankdir=LR
+  input [label="{Input|{<in1>1|<in2>0|<in3>1}}"]
+  add1 [label="{{<a11>1|<a12>4}|add|{<a1o>5}}"]
+  dub1 [label="{{<dub11>2|<dub12>2}|add|{<dub1o>4}}"]
+if1 [label="{{<if1i>1|1|0}|if|{<if1o>1}}"]
+  output [label="{{<out>5}|output}"]
+  if2 [label="{{<if2i>0|1|0}|if|{<if2o>0}}"]
+  if3 [label="{{<if3i>1|1|0}|if|{<if3o>1}}"]
+  add2 [label="{{<a21>0|<a22>2}|add|{<a2o>2}}"]
+  add3 [label="{{<a31>1|<a32>0}|add|{<a3o>1}}"]
+   dub2 [label="{{<dub21>1|<dub22>1}|add|{<dub2o>2}}"]
+add1:a1o -> output:out [label="5"]
+input:in1 -> if1:if1i  [label="1"]
+if1:if1o -> add1:a11 [label="1"]
+dub1:dub10 -> add1:a12 [label="3"]
+input:in2 -> if2:if2i [label="0"]
+input:in3 -> if3:if3i [label="1"]
+if2:if2o -> add2:a21 [label="0"]
+add2:a2o -> dub1:dub11 [label="2"]
+add2:a2o -> dub1:dub12 [label="2"]
+if3:if3o -> add3:a31 [label="1"]
+add3:a3o -> dub2:dub22 [label="1"]
+add3:a3o -> dub2:dub21 [label="1"]
+dub2:dub2o -> add2:add22 [label="2"]
+{rank=same; if1 if2 if3 }
+   }
+   \centering
+   \caption{An Example showing $\llbracket 101 \rrbracket = 5$}
+   \label{fig:conversionsbton}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Half-Adder Specification}
+
+  A half adder is a function that adds two bits.
+\begin{equation}
+  \cdot +_{H} \cdot : \mathbb{B} \times \mathbb{B} \to \mathbb{B}^{2}
+\end{equation}
+  We need a correctness specification for a half-adder.
+\pause
+\begin{equation}\label{eqn:halfadder}
+  \forall A,B \in \mathbb{B}^{1} \qquad \llbracket A +_{H} B \rrbracket = \llbracket A \rrbracket +_{N} \llbracket B \rrbracket
+\end{equation}
+
+
+\end{frame}
+
+\begin{frame}{Half-Adder Example}
+\begin{equation}\label{eqn:defhalfadd}
+  \forall A,B\in \mathbb{B}^{1} \qquad A +_{H} B = (A \land B , A \oplus B)
+\end{equation}
+ \begin{figure}
+   \digraph[width=\textwidth]{halfadder}{
+  node [shape=Mrecord]
+  rankdir=LR
+  input [label="{Input|{<in1>1|<in2>1}}"]
+  output [label="{{<out2>1|<out1>0}|output}"]
+    xor [label="{{<xi1>1|<xi2>1} | xor | {<xo>0}}"]
+    and [label="{{<ai1>1|<ai2>1} | and | {<ao>1}}"]
+    input:in1 -> xor:xi1 [label="1"]
+    input:in2 -> xor:xi2 [label="1"]
+    input:in1 -> and:ai1 [label="1"]
+    input:in2 -> and:ai2 [label="1"]
+     xor:xo -> output:out1 [label="0"]
+    and:ao -> output:out2 [label="1"]
+   }
+   \centering
+   \caption{An Example Showing $1 +_{H} 1 = 10$}
+\end{figure}
+
+
+
+\end{frame}
+
+\begin{frame}{Full-Adder Specification}
+  A full-adder adds $3$ bits with possibly a carry.
+  \begin{equation}
+    +_{F}(\cdot , \cdot , \cdot) : \mathbb{B} \times \mathbb{B} \times \mathbb{B} \to \mathbb{B}^{2}
+\end{equation}
+\begin{equation}\label{eqn:fulladderspec}
+  \forall A,B, C \in \mathbb{B}^{1} \qquad \llbracket +_{F}(A,B,C) \rrbracket  = \llbracket A \rrbracket  + \llbracket B \rrbracket + \llbracket C \rrbracket
+\end{equation}
+
+\end{frame}
+
+\begin{frame}{Full-Adder Example}
+\begin{equation}\label{eqn:fulladderdef}
+  \forall A,B,C \in \mathbb{B}^{1} \qquad +_{F}(A,B,C) = (A \land B \lor (A \oplus B) \land C , A \oplus B \oplus C )
+\end{equation}
+ \begin{figure}
+   \digraph[width=\textwidth]{fulladder}{
+  node [shape=Mrecord]
+  rankdir=LR
+  input [label="{Input|{<in1>1|<in2>0|<in3>1}}"]
+  output [label="{{<outc>1|<outs>0}|output}"]
+    ad1 [label="{{<a11>1|<a12>0} | half-adder | {<a1c>0|<a1s>1}}"]
+    ad2 [label="{{<a21>1|<a22>1} | half-adder | {<a2c>1|<a2s>0}}"]
+    or [label="{{<oi1>0|<oi2>1} | or | {<oo>1}}"]
+    input:in1 -> ad1:a11 [label="1"]
+    input:in2 -> ad1:a12 [label="0"]
+   input:in3 -> ad2:a22 [label="1"]
+ad1:a1s -> ad2:a21 [label="1"]
+ad2:a2s -> output:outs [label="0"]
+ad2:a2c -> or:oi2 [label="1"]
+ad1:a1c -> or:oi1 [label="0"]
+or:oo -> output:outc [label="1"]
+   }
+   \centering
+   \caption{An Example Showing $+_{F}(1,0,1) = 10$}
+   \label{fig:fulladder}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Ripple Adder Specification}
+  \begin{equation}
+    \cdot +_{\mathbb{B}^{n}}^{\cdot} \cdot : \mathbb{B}^{1} \times \mathbb{B}^{n} \times \mathbb{B}^{n} \to \mathbb{B}^{n+1}
+    \end{equation}
+
+    \begin{equation}
+      \forall A , B \in \mathbb{B}^{n} \quad \forall C \in \mathbb{B}^{1} \qquad \llbracket A +_{\mathbb{B}^{n}}^{C} B \rrbracket = \llbracket A \rrbracket +_{N} \llbracket B \rrbracket +_{N} \llbracket C \rrbracket
+    \end{equation}
+\end{frame}
+
+\begin{frame}{Ripple Adder Specification}
+
+\begin{table}
+ \begin{tabular}{c|c|c|c}
+     ${}^1$ & ${}^11$    &${}^1 0$    &1\\
+     + & 1      & 1    & 1 \\ \hline
+    1 & 1    & 0    &0\\ \hline
+ \end{tabular}
+ \centering
+ \caption{Grade-School Addition}
+ \label{tab:gradeschooladdition}
+\end{table}
+\begin{equation}\label{eqn:RCA}
+  \begin{split}
+  a_{n-1}\cdots a_{2}a_{1}a_{0} +_{\mathbb{B}^{n}}^{c_{0}} b_{n-1} \cdots b_{2}b_{1}b_{0} = (a_{n-1} \cdots a_{2}a_{1} +_{\mathbb{B}^{n-1}}^{c_{1}} b_{n-1} \cdots b_{2}b_{1})  r_{0} \\
+  \text{where}\\
+   c_{1}r_{0} = +_{F}(a_{0}, b_{0}, c_{0})
+    \end{split}
+  \end{equation}
+\end{frame}
+\begin{frame}{Ripple Adder Picture}
+ \begin{figure}
+   \digraph[width=\textwidth]{bitadder}{
+node [shape=Mrecord]
+  rankdir=LR
+  input1 [label="{Input 1|{<i11>1|<i12>0|<i13>1}}"]
+input2 [label="{Input 2|{<i21>1|<i22>1|<i23>1}}"]
+  output [label="{{<o1>1|<o2>1|<o3>0|<o4>0}|Output}"]
+  f1 [label="{{<f11>1|<f12>1|<f13>0}|Full-Adder|{<f1c>1|<f1s>0}}"]
+  input1:i13 -> f1:f11 [label="1"]
+  input2:i23 -> f1:f12 [label="1"]
+  f1:f1s -> output:o4 [label="0"]
+  f2 [label="{{<f21>0|<f22>1|<f23>1}|Full-Adder|{<f2c>1|<f2s>0}}"]
+input1:i12 -> f2:f21 [label="0"]
+  input2:i22 -> f2:f22 [label="1"]
+  f1:f1c -> f2:f23 [label="1"]
+  f2:f2s -> output:o3 [label="0"]
+    f3 [label="{{<f31>1|<f32>1|<f33>1}|Full-Adder|{<f3c>1|<f3s>1}}"]
+input1:i11 -> f3:f31 [label="1"]
+  input2:i21 -> f3:f32 [label="1"]
+  f2:f2c -> f3:f33 [label="1"]
+  f3:f3s -> output:o2 [label="1"]
+  f3:f3c -> output:o1 [label="1"]
+   }
+   \centering
+   \caption{An Example Showin $101 +_{\mathbb{B}^{3}} 111 = 1100 $}
+   \label{fig:RCA}
+\end{figure}
+
+
+\end{frame}
+
+\begin{frame}{Ripple Adder Proof}
+Every talk must include exactly $1$ proof.
+
+\begin{proof}
+  Induct on $n$. If $n=1$, we just have a full-adder. Otherwise, let $n = n + 1$.
+  \begin{align}
+    &\llbracket a_{n}\cdots a_{2}a_{1}a_{0} +_{\mathbb{B}^{n+1}}^{c_{0}} b_{n} \cdots b_{2}b_{1}b_{0} \rrbracket\\
+    &= \llbracket (a_{n} \cdots a_{2}a_{1} +_{\mathbb{B}^{n}}^{c_{1}} b_{n} \cdots b_{2}b_{1})  r_{0}  \rrbracket \\
+    &= 2\llbracket a_{n} \cdots a_{2}a_{1} +_{\mathbb{B}^{n}}^{c_{1}} b_{n} \cdots b_{2}b_{1} \rrbracket + \llbracket  r_{0}  \rrbracket \\
+    &= 2 (\llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  \llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket c_{1} \rrbracket ) + \llbracket  r_{0}  \rrbracket \\
+    &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + 2\llbracket c_{1} \rrbracket + \llbracket r_{0} \rrbracket \\
+    &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket c_{1}r_{0} \rrbracket \\
+    &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket +_{F}(a_{0}, b_{0}, c_{0}) \rrbracket \\
+    &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket a_{0} \rrbracket + \llbracket b_{0}\rrbracket + \llbracket c_{0} \rrbracket \\
+    &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket + \llbracket a_{0}  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket b_{0} \rrbracket  + \llbracket c_{0} \rrbracket \\
+    &= \llbracket a_{n} \cdots a_{2}a_{1}a_{0} \rrbracket + \llbracket b_{n} \cdots b_{2}b_{1}b_{0} \rrbracket + \llbracket c_{0} \rrbracket
+\end{align}
+\end{proof}
+\end{frame}
 \end{document}
