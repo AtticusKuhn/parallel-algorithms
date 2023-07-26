@@ -13,7 +13,7 @@ module numbers {lvl} {S : Set lvl} {_⇨_ : S  → S  → Set} (let infix 0 _⇨
 
 
 -- open HasBitOperations bitops
-
+open import Data.Nat using (ℕ ; suc)
 record Number (A : S) : Set (Agda.Primitive.lsuc lvl) where
   field
     -- %2 : A ⇨ Bit
@@ -31,6 +31,10 @@ record Number (A : S) : Set (Agda.Primitive.lsuc lvl) where
   *2 = add ∘ Cartesian.dup y
   /2∘*2 : /2 ∘ *2 ≈ id
   /2∘*2 = {! !}
+
+  2^ : ℕ → A ⇨ A
+  2^ 0  = id
+  2^ (suc n) = *2 ∘ 2^ n
 
     -- zeroeven : %2 ∘ p0 ≈ HasBitOperations.bit0 bitops
     -- distrib : %2 ∘ add ≈ HasBitOperations.xor bitops ∘ twice %2

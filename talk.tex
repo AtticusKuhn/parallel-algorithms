@@ -40,6 +40,9 @@
 %% \hspace{1cm}
 %% \includegraphics[keepaspectratio=true,height=1.4cm]{iohk}
 
+\makeatletter
+\def\zzpause{\ifmeasuring@\else\expandafter\pause\fi}
+\makeatother
 
 \begin{document}
 
@@ -56,10 +59,59 @@
   \begin{defn}
     \textbf{Denotational Design} is a type of thinking that prioirtizes thinking about the meaning and creating precise and elegant specifications using tools from abstract algebra and category theory.
 \end{defn}
-
+\pause
 \begin{notn}
   In denotational design, the function $\llbracket \cdot \rrbracket$ is used to take any object to its meaning.
 \end{notn}
+\end{frame}
+
+\begin{frame}{Motivations}
+  \textbf{Why are we interested?} \pause
+  Software and hardware engineering are built upon a tower of hodge-podge and ad-hoc foundations; desirable properties
+  such as correctness are either not checked or not even specified
+  \pause
+  \begin{quote}
+    ``That is not only not right; it is not even wrong''
+    - Wolgang Pauli
+\end{quote}
+\pause
+Using mathematics can return elegance to computation.
+\end{frame}
+
+\begin{frame}[fragile]{Philosophy}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+
+  % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRAB12BbOnACwBGA4ADkAviDGl0mXPkIoAzOSq1GLNpx78hoiVJnY8BImQBMq+s1aIO3XoOEAhMQD1CBkBiPyiyi9RWGrZaDrou7pLSXrLGCshmpAFq1mxRhnImKImUgeo2IJKqMFAA5vBEoABmAE4QXEiJIDgQSMopwSAA1AD6wKE6zm5gEtRwfFhVOEjEnrX1bdQtSACMeakh7AwMAjV0AMYA1jA4AASc+1AQZ5w1NbsHx9NzdQ2ITcuIZB0FnNsPRxO53Yl2uwLuAKe6RA8ze30+ax+bF6-Xsgz0oxADCwYAKcAg2Kg0NhSAALEtWogAKzUbG4thXHA4EogMYTKZIAC0K2+QV+Wx2e0BNxBjPB9yFULEFDEQA
+  \begin{figure}
+\begin{tikzcd}
+\mathbb{N} \arrow[rrr, "+_{\mathbb{N}}"]                                               &  & {}                                                                  & \mathbb{N}                                             \\
+                                                                                       &  &                                                                     &                                                        \\
+\mathbb{B}^n \arrow[rrr, "+_{\mathbb{B}^n}"] \arrow[uu, "\llbracket \cdot \rrbracket"] &  & {} \arrow[uu, "\llbracket \cdot \rrbracket", dotted, shift left=6] & \mathbb{B}^n \arrow[uu, "\llbracket \cdot \rrbracket"]
+\end{tikzcd}
+\caption{A Diagram Showing the Relationship Between Representations and Meanings}
+\figlabel{comm}
+\end{figure}
+
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+
+We care about problems in \textbf{mathematics}, but our computations take place over \textbf{physics} (electrons, circuits).
+\pause The denotation function $\llbracket \cdot \rrbracket$ gives us the meaning of any representation of electrons or bits.
+
+\pause
+\begin{qn}
+What does it mean for a function over representations to be correct?
+\end{qn}
+\pause
+\begin{thm}
+  We say a function over representations is \textbf{correct} if \figref{comm} commutes, i.e. if
+  \[\llbracket A +_{\mathbb{B}^{n}} B \rrbracket = \llbracket A \rrbracket +_{N} \llbracket B \rrbracket.\]
+\end{thm}
+
+
+\end{column}
+\end{columns}
 \end{frame}
 
 \begin{frame}{Why Computer Arithmetic}
@@ -76,13 +128,14 @@
   \begin{enumerate}
           \pause \item In my paper, I used the computer theorem prover language \textbf{Agda} to prove my propositions correct. You do not need to know programming for this talk.
           \pause \item In my paper, I talked about category theory, but for the sake of this talk, just imagine everything is occuring in the category of functions.
+          \pause \item In my paper, I used little endian encoding, but in this talk, I will use big endian encoding because most people are probably more familiar with big endian.
         \end{enumerate}
 \end{frame}
 
 
 \begin{frame}{Binary Basics}
 
-We will represent binary numbers as lists of bits, where the least significant bit is on the left (little endian encoding).
+We will represent binary numbers as lists of bits, where the least significant bit is on the right (big endian encoding).
 
 As an additional preliminary, we expect the reader to be familiar with common bitwise operations, including $\cdot \oplus \cdot$, $\cdot \lor \cdot$, and $\cdot \land \cdot$ (see table~\ref{table:bitops}).
 \begin{notn}
@@ -112,11 +165,14 @@ As an additional preliminary, we expect the reader to be familiar with common bi
 
 \begin{frame}{Converting $\mathbb{B}^{n}$ to $N$ }
   Anything we do is only correct modulo our meaning function $\llbracket \cdot \rrbracket$.
-  \begin{equation}
-    \llbracket b_{0} b_{1} b_{2} \ldots b_{n-1} \rrbracket = \llbracket b_{0} \rrbracket + 2 \llbracket b_{1} \rrbracket + 4 \llbracket b_{2} \rrbracket + \cdots + 2^{n-1} \llbracket b_{n-1 } \rrbracket
-\end{equation}
+  \begin{align}
+    \llbracket b_{n-1} \cdots b_{1} b_{0} \rrbracket
+    &=  \llbracket b_{0} \rrbracket + 2 \llbracket b_{n-1} \cdots b_{1} \rrbracket \\
+    \zzpause &= \llbracket b_{0} \rrbracket + 2 \llbracket b_{1} \rrbracket + 4 \llbracket b_{2} \rrbracket + \cdots + 2^{n-1} \llbracket b_{n-1 } \rrbracket
+\end{align}
+\pause
  \begin{figure}
-   \digraph[width=\textwidth]{conversions}{
+   \digraph[width=.8\textwidth]{conversions}{
   node [shape=Mrecord]
   rankdir=LR
   input [label="{Input|{<in1>1|<in2>0|<in3>1}}"]
@@ -153,7 +209,7 @@ dub2:dub2o -> add2:add22 [label="2"]
 
 \begin{frame}{Half-Adder Specification}
 
-  A half adder is a function that adds two bits.
+  A half adder is a function that adds two bits (possibly with a carry).
 \begin{equation}
   \cdot +_{H} \cdot : \mathbb{B} \times \mathbb{B} \to \mathbb{B}^{2}
 \end{equation}
@@ -171,7 +227,7 @@ dub2:dub2o -> add2:add22 [label="2"]
   \forall A,B\in \mathbb{B}^{1} \qquad A +_{H} B = (A \land B , A \oplus B)
 \end{equation}
  \begin{figure}
-   \digraph[width=\textwidth]{halfadder}{
+   \digraph[width=.8\textwidth]{halfadder}{
   node [shape=Mrecord]
   rankdir=LR
   input [label="{Input|{<in1>1|<in2>1}}"]
@@ -187,6 +243,7 @@ dub2:dub2o -> add2:add22 [label="2"]
    }
    \centering
    \caption{An Example Showing $1 +_{H} 1 = 10$}
+   \label{fig:halfadder}
 \end{figure}
 
 
@@ -288,7 +345,7 @@ input1:i11 -> f3:f31 [label="1"]
   f3:f3c -> output:o1 [label="1"]
    }
    \centering
-   \caption{An Example Showin $101 +_{\mathbb{B}^{3}} 111 = 1100 $}
+   \caption{An Example Showin $101 +_{\mathbb{B}^{3}}^{0} 111 = 1100 $}
    \label{fig:RCA}
 \end{figure}
 
@@ -296,22 +353,117 @@ input1:i11 -> f3:f31 [label="1"]
 \end{frame}
 
 \begin{frame}{Ripple Adder Proof}
-Every talk must include exactly $1$ proof.
 
 \begin{proof}
   Induct on $n$. If $n=1$, we just have a full-adder. Otherwise, let $n = n + 1$.
   \begin{align}
     &\llbracket a_{n}\cdots a_{2}a_{1}a_{0} +_{\mathbb{B}^{n+1}}^{c_{0}} b_{n} \cdots b_{2}b_{1}b_{0} \rrbracket\\
-    &= \llbracket (a_{n} \cdots a_{2}a_{1} +_{\mathbb{B}^{n}}^{c_{1}} b_{n} \cdots b_{2}b_{1})  r_{0}  \rrbracket \\
-    &= 2\llbracket a_{n} \cdots a_{2}a_{1} +_{\mathbb{B}^{n}}^{c_{1}} b_{n} \cdots b_{2}b_{1} \rrbracket + \llbracket  r_{0}  \rrbracket \\
-    &= 2 (\llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  \llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket c_{1} \rrbracket ) + \llbracket  r_{0}  \rrbracket \\
-    &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + 2\llbracket c_{1} \rrbracket + \llbracket r_{0} \rrbracket \\
-    &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket c_{1}r_{0} \rrbracket \\
-    &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket +_{F}(a_{0}, b_{0}, c_{0}) \rrbracket \\
-    &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket a_{0} \rrbracket + \llbracket b_{0}\rrbracket + \llbracket c_{0} \rrbracket \\
-    &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket + \llbracket a_{0}  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket b_{0} \rrbracket  + \llbracket c_{0} \rrbracket \\
-    &= \llbracket a_{n} \cdots a_{2}a_{1}a_{0} \rrbracket + \llbracket b_{n} \cdots b_{2}b_{1}b_{0} \rrbracket + \llbracket c_{0} \rrbracket
+   \zzpause &= \llbracket (a_{n} \cdots a_{2}a_{1} +_{\mathbb{B}^{n}}^{c_{1}} b_{n} \cdots b_{2}b_{1})  r_{0}  \rrbracket \\
+    \zzpause &= 2\llbracket a_{n} \cdots a_{2}a_{1} +_{\mathbb{B}^{n}}^{c_{1}} b_{n} \cdots b_{2}b_{1} \rrbracket + \llbracket  r_{0}  \rrbracket \\
+     \zzpause &= 2 (\llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  \llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket c_{1} \rrbracket ) + \llbracket  r_{0}  \rrbracket \\
+      \zzpause&= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + 2\llbracket c_{1} \rrbracket + \llbracket r_{0} \rrbracket \\
+      \zzpause&= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket c_{1}r_{0} \rrbracket \\
+    \zzpause  &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket +_{F}(a_{0}, b_{0}, c_{0}) \rrbracket \\
+    \zzpause  &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket  +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket a_{0} \rrbracket + \llbracket b_{0}\rrbracket + \llbracket c_{0} \rrbracket \\
+    \zzpause  &= 2 \llbracket a_{n} \cdots a_{2}a_{1} \rrbracket + \llbracket a_{0} \rrbracket +  2\llbracket b_{n-1} \cdots b_{2}b_{1} \rrbracket + \llbracket b_{0} \rrbracket  + \llbracket c_{0} \rrbracket \\
+     \zzpause &= \llbracket a_{n} \cdots a_{2}a_{1}a_{0} \rrbracket + \llbracket b_{n} \cdots b_{2}b_{1}b_{0} \rrbracket + \llbracket c_{0} \rrbracket
 \end{align}
 \end{proof}
+\end{frame}
+
+\section{Multiplication}
+
+\begin{frame}[fragile]{Multiplication Specification}
+  Before we implement multiplication, we first need a specification.
+  \pause The specification for multiplication is very similar to that of addition.
+  \pause
+  \[\forall A \in \mathbb{B}^{m} \quad B \in \mathbb{B}^{n} \qquad \llbracket A \times_{\mathbb{B}^{m,n}} B \rrbracket = \llbracket A \rrbracket \times_{N} \llbracket B \rrbracket\]
+
+  % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRAB12BbOnACwBGA4ADkAviDGl0mXPkIoAzOSq1GLNpx78hoiVJnY8BImQBMq+s1aIO3XoOEAhMQD1CBkBiPyiyi9RWGrZaDrou7pLSXrLGCshmpAFq1mxRhnImKImUgeo2IJKqMFAA5vBEoABmAE4QXEiJIDgQSMopwSAA1AD6wKE6zm5gEtRwfFhVOEjEnrX1bdQtSACMeakh7AwMAjV0AMYA1jA4AASc+1AQZ5w1NbsHx9NzdQ2ITcuIZB0FnNsPRxO53Yl2uwLuAKe6RA8ze30+ax+bF6-Xsgz0oxADCwYAKcAg2Kg0NhSAALEtWogAKzUbG4thXHA4EogMYTKZIAC0K2+QV+Wx2e0BNxBjPB9yFULEFDEQA
+  \begin{figure}
+\begin{tikzcd}
+\mathbb{N} \arrow[rrr, "\times_{\mathbb{N}}"]                                               &  & {}                                                                  & \mathbb{N}                                             \\
+                                                                                       &  &                                                                     &                                                        \\
+\mathbb{B}^n \arrow[rrr, "\times_{\mathbb{B}^n}"] \arrow[uu, "\llbracket \cdot \rrbracket"] &  & {} \arrow[uu, "\llbracket \cdot \rrbracket", dotted, shift left=6] & \mathbb{B}^n \arrow[uu, "\llbracket \cdot \rrbracket"]
+\end{tikzcd}
+\caption{Specification of Multiplication}
+\figlabel{comm}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}{Bit Multiplier}
+  Our first building block is multiplication by a single bit.
+  \pause The correctness specification is
+  \[\forall b \in \mathbb{B}^{1} \quad A \in \mathbb{B}^{n} \qquad \llbracket b \times_{\mathbb{B}^{1,n}} A \rrbracket = \llbracket b \rrbracket \times_{N} \llbracket A \rrbracket\]
+  \pause
+  One implementation is
+\begin{align*}\label{eq:mulbita}
+  &\cdot \times_{\mathbb{B}^{1,m}} \cdot : \mathbb{B}^{1} \times \mathbb{B}^{n} \to \mathbb{B}^{n}\\
+  &a \times_{\mathbb{B}^{1,m}} B =  if(a,B,0)
+\end{align*}
+
+
+\end{frame}
+
+
+\begin{frame}{Shift Right}
+  We also need the ability to double a number, which we will call $\cdot \ll 1$.
+  \pause We will have specification
+  \[\forall B \in \mathbb{B}^{n} \qquad \llbracket B \ll 1 \rrbracket = 2\llbracket B \rrbracket\]
+  \pause We can implement the specification by just appending a $0$ to the end.
+
+  \[b_{n-1}\cdots b_{1}b_{0} \ll 1 = b_{n-1}\cdots b_{1} b_{0} 0\]
+\end{frame}
+
+\begin{frame}{Shift and Add}
+\begin{table}
+  \begin{tabular}{c|c|c|c|c|c|c|c}
+    &  & & & 1 & 0 & 1 & 1 \\
+    &  & & $\times$ & 1 & 1 & 1 & 0 \\
+    \hline
+
+    &  & & & 0 & 0 & 0 & 0 \\
+    &  & & 1 & 0 & 1 & 1 &  \\
+     & & 1 & 0 & 1 & 1 & &   \\
+      + & 1 & 0 & 1 & 1 &    \\
+    \hline
+
+      1 & 0 & 0 & 1 & 1 & 0 & 1 & 0    \\
+\end{tabular}
+\centering
+\caption{An Example shift-and-add multiplication}
+\label{tab:mul}
+\end{table}
+
+\begin{equation}\label{equation:addnshift}
+  b_{n-1}\ldots b_{1}b_{0} \times_{\mathbb{B}^{n, m}} A = b_{0}\times_{\mathbb{B}^{1,m}} A + (b_{n-1}, \ldots, b_{1} \times_{\mathbb{B}^{n-1, m}} A) \ll 1
+\end{equation}
+
+
+\end{frame}
+
+
+\begin{frame}{Future Work}
+  \begin{enumerate}
+    \item Carry-Lookahead Adders
+    \pause \item Binary Subtraction
+    \item Binary Division
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{Key Takeaways}
+  \begin{enumerate}
+    \pause \item We can formally prove the correctness of software and hardware components.
+    \pause \item Homomoprhisms and category theory can give us more elegant and precise specifications.
+\end{enumerate}
+\end{frame}
+\begin{frame}{Questions?}
+  Ask me any questions.
+  Or if you have any questions later
+  \begin{enumerate}
+    \item Email me at atticusmkuhn@gmail.com
+     \item On Discord at Euler\#2074
+\end{enumerate}
 \end{frame}
 \end{document}

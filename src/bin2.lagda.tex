@@ -1,3 +1,8 @@
+\usepackage{fancyvrb}
+
+\DefineVerbatimEnvironment
+  {code}{Verbatim}
+  {frame=single} % Add fancy options here if you like.
 Switching course, I will explore binary arithmetic at first.
 
 
@@ -84,6 +89,7 @@ Bits n = List n Bit
 # Convert Between Numbers and Little Endian Representations
 Define the denotation function to convert between numbers and our binary representation of numbers. We are representing binary numbers as a little endian list of bits.
 %<*Conversions>
+% \begin{tcolorbox}
 \begin{code}
 NatToLittleEndian : N ⇨ Bits b
 NatToLittleEndian {0} =  %2
@@ -96,6 +102,7 @@ LittleEndianToNat : Bits b ⇨ N
 LittleEndianToNat  {0} = bitToNat
 LittleEndianToNat {suc b} =   add ∘ (bitToNat  ⊗ (*2 ∘ LittleEndianToNat {b}))
 \end{code}
+% \end{tcolorbox}
 %</Conversions>
 
 
@@ -303,3 +310,38 @@ mulAsym : Bits a × Bits b ⇨ Bits (suc (a + b))
 mulAsym {0} {b} = snoc0 {b} ∘ mulDigit {b}
 mulAsym {suc a} {b} =  shiftAdd {b = b} {a =  suc a}  ∘ ( mulDigit {b} ⊗ mulAsym {a} {b} )∘ transpose ∘ second dup
 \end{code}
+
+%<*Shift>
+\begin{code}
+<< : Bits a ⇨ Bits (b + a)
+<< {b = 0} =  id
+<< {b = suc b} =  (constˡ bit0) ∘ << {b = b}
+\end{code}
+%</Shift>
+
+\begin{code}
+
+
+open import Data.Nat.Properties using (+-identityʳ ; +-comm)
+--
+
+<<' : Bits a ⇨ Bits (a + b)
+<<' {a} {b} rewrite (+-comm a b) = << {a} {b}
+\end{code}
+
+%<*ShiftSpec>
+\begin{code}
+<<spec : (a b : ℕ) → LittleEndianToNat {b + a} ∘ << {a} {b} ≈ (2^ b) ∘ LittleEndianToNat {a}
+<<spec  = {! !}
+\end{code}
+%</ShiftSpec>
+
+
+%<*ShiftAndAdd>
+\begin{code}
+shiftAndAdd : Bits a × Bits b ⇨ Bits (suc (a + b))
+shiftAndAdd {0} {b} = (<<'  {0} {suc b} ∘ bit0 ∘ !)
+shiftAndAdd {suc a} {b}  = RippleAdd {suc a + b} ∘  (<< {b} {suc a} ∘ mulDigit {b} ⊗ shiftAndAdd {a} {b})
+  ∘  transpose ∘  second dup
+\end{code}
+%</ShiftAndAdd>

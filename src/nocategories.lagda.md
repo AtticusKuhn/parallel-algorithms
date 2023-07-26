@@ -1,7 +1,8 @@
 NO CATEGORIES
 
 
-
+# Imports
+Import some required libraries
 ```agda
 -- open import Data.List
 open import Data.Vec
@@ -14,17 +15,26 @@ open import Relation.Binary.PropositionalEquality hiding ([_])
 -- open import Agda.Builtin.Sigma
 open import Data.Product hiding (zip) -- hiding (_,_)
 module nocategories where
+```
+
+```agda
 variable
  a b c d : Bool
  n m l o p : ℕ
 
-record HasDenotation (Bit : Set) : Set where
+-- record ⟦_⟧≡_ (Bit : Set) : Set where
+--   field
+--     toD : Bit → ℕ
+infix 7 ⟦_⟧≡_
+record ⟦_⟧≡_ (x y : Set) : Set where
   field
-    toD : Bit → ℕ
+    conv : x → y
+  --   dummy : ⊤
+
 
 infix 7 ⟦_⟧
-⟦_⟧ : {Bit : Set} ⦃ h : HasDenotation Bit ⦄ → Bit →  ℕ
-⟦_⟧ ⦃ h ⦄ bit = HasDenotation.toD h bit
+⟦_⟧ : {A B : Set} ⦃ h :  ⟦ A ⟧≡ B ⦄ → A →  B
+⟦_⟧ ⦃ h ⦄ a = ⟦_⟧≡_.conv h a
 -- pattern ⟦_⟧ x = (HasDenotation.⟦_⟧ x)
 
 
@@ -49,68 +59,73 @@ bitD b = if b then 1 else 0
 bitsD : Bits n → ℕ
 bitsD {0} [] = 0
 bitsD {suc n} (head ∷  rest) = ( bitD head ) + 2 * (bitsD rest)
-record hasT (x y : Set) : Set where
-  field
-    conv : x → y
-  --   dummy : ⊤
+-- infix 7 ⟦_⟧≡_
+-- record ⟦_⟧≡_ (x y : Set) : Set where
+--   field
+--     conv : x → y
+--   --   dummy : ⊤
 
 -- infix 7 t⟦_⟧
 -- t⟦_⟧ : {x y : Set} ⦃ t : hasT x y ⦄ → x → y
 -- t⟦_⟧ ⦃ t ⦄ x = hasT.t⟦_⟧ t x
 -- open hasT
+-- instance
+--   tbit : ⟦ Bit ⟧≡ ℕ
+--   tbit = record {
+--     conv = λ x → if x then 1 else 0
+--  --    dummy = tt
+--     }
+--   tbits :  ⟦ (Bits n) ⟧≡ ℕ
+--   tbits = record {
+--     conv = bitsD
+--     -- dummy = tt
+--     }
+--   postulate
+--     tfun : {A B C D : Set} → ⦃  ⟦ A ⟧≡ C ⦄ → ⦃  ⟦ B ⟧≡ D ⦄ →  ⟦ (A → B) ⟧≡ (C → D)
+-- infix 7 p⟦_⟧
+-- p⟦_⟧ : {a b : Set} ⦃ t :  ⟦ a ⟧≡ b ⦄ → a → b
+-- p⟦_⟧ ⦃ t ⦄ = ⟦_⟧≡_.conv t
+-- postulate
+--   -- t⟦_⟧ : Set → Set
+--   -- tbit : t⟦ Bit ⟧ ≡ ℕ
+--   -- tbits : t⟦ Bits n ⟧ ≡ ℕ
+--   -- tfun : {A B : Set } → t⟦  (A → B) ⟧ ≡ (t⟦ A ⟧ → t⟦ B ⟧)
+--   -- p⟦_⟧ : {a b : Set}  → ⦃ t : hasT a b ⦄ → a → b
+--   -- ptrue : p⟦ true ⟧ ≡  1
+--   -- pfalse : p⟦ false ⟧ ≡  0
+--   -- pbits : {x : Bit} { xs : Bits n } → p⟦ x ∷ xs ⟧ ≡ p⟦ x ⟧ + 2 * p⟦ xs ⟧
+--   -- (∀ x → ⟦ f x ⟧ ≡ g ⟦ x ⟧) →  ⟦ f ⟧ ≡ g
+--   -- pfunext : {x y a b : Set} {f : x → y} {g : a → b} → ⦃ tyb : hasT y b ⦄ → ⦃ txa : hasT x a ⦄  →  ( (h : x) → (p⟦_⟧ {y} {b} ⦃ tyb ⦄  (f h)) ≡ g (p⟦_⟧ {x} {a} ⦃ txa ⦄ h  )) → p⟦ f ⟧ ≡ g
+--   pfunext : {x y a b : Set} {f : x → y} {g : a → b} → ⦃ yb :  ⟦ y ⟧≡ b ⦄ → ⦃ xa :   ⟦ x ⟧≡ a ⦄  →  ( (h : x) → (p⟦ f h ⟧) ≡ g (p⟦ h ⟧)) → p⟦ f ⟧ ≡ g
+--   -- pbits : {x : Bit} {xs : Bits n} → p⟦ x ∷ xs ⟧ ≡ cast (sym tbits) (cast (tbit) p⟦ x ⟧ + 2 *  cast (tbits) p⟦ xs ⟧)
+--   pfunext2 : {x y z  px py pz : Set} {f : x → y → z} { pf : px → py → pz } → ⦃ xpx :  ⟦ x ⟧≡ px ⦄ → ⦃ ypy : ⟦ y ⟧≡ py ⦄ → ⦃ zpz :  ⟦ z ⟧≡ pz ⦄ →  ( (p : x) → (q : y) → ( p⟦ f p q ⟧ ) ≡ pf p⟦ p ⟧ p⟦ q ⟧   )  → p⟦ f ⟧ ≡ pf
+-- -- pfunext2 {x} {y} {z} {px} {py} {pz} {f} {pf} eq rewrite (pfunext {x} {y → z} {px} {py → pz} {f = f}  eq ) = {!!}
+
 instance
-  tbit : hasT Bit ℕ
-  tbit = record {
-    conv = λ x → if x then 1 else 0
- --    dummy = tt
+  denotationBool :  ⟦ Bool ⟧≡ ℕ
+  denotationBool = record {
+    conv = bitD
     }
-  tbits :  hasT (Bits n) ℕ
-  tbits = record {
+  denotationBits :  ⟦ Bits n ⟧≡ ℕ
+  denotationBits = record {
     conv = bitsD
-    -- dummy = tt
     }
   postulate
-    tfun : {A B C D : Set} → ⦃ hasT A C ⦄ → ⦃ hasT B D ⦄ →  hasT (A → B) (C → D)
-infix 7 p⟦_⟧
-p⟦_⟧ : {a b : Set} ⦃ t : hasT a b ⦄ → a → b
-p⟦_⟧ ⦃ t ⦄ = hasT.conv t
+    denotationFunction : {A B C D : Set} → ⦃  ⟦ A ⟧≡ C ⦄ → ⦃  ⟦ B ⟧≡ D ⦄ →  ⟦ (A → B) ⟧≡ (C → D)
+
 postulate
-  -- t⟦_⟧ : Set → Set
-  -- tbit : t⟦ Bit ⟧ ≡ ℕ
-  -- tbits : t⟦ Bits n ⟧ ≡ ℕ
-  -- tfun : {A B : Set } → t⟦  (A → B) ⟧ ≡ (t⟦ A ⟧ → t⟦ B ⟧)
-  -- p⟦_⟧ : {a b : Set}  → ⦃ t : hasT a b ⦄ → a → b
-  -- ptrue : p⟦ true ⟧ ≡  1
-  -- pfalse : p⟦ false ⟧ ≡  0
-  -- pbits : {x : Bit} { xs : Bits n } → p⟦ x ∷ xs ⟧ ≡ p⟦ x ⟧ + 2 * p⟦ xs ⟧
-  -- (∀ x → ⟦ f x ⟧ ≡ g ⟦ x ⟧) →  ⟦ f ⟧ ≡ g
-  -- pfunext : {x y a b : Set} {f : x → y} {g : a → b} → ⦃ tyb : hasT y b ⦄ → ⦃ txa : hasT x a ⦄  →  ( (h : x) → (p⟦_⟧ {y} {b} ⦃ tyb ⦄  (f h)) ≡ g (p⟦_⟧ {x} {a} ⦃ txa ⦄ h  )) → p⟦ f ⟧ ≡ g
-  pfunext : {x y a b : Set} {f : x → y} {g : a → b} → ⦃ tyb : hasT y b ⦄ → ⦃ txa : hasT x a ⦄  →  ( (h : x) → (p⟦ f h ⟧) ≡ g (p⟦ h ⟧)) → p⟦ f ⟧ ≡ g
-  -- pbits : {x : Bit} {xs : Bits n} → p⟦ x ∷ xs ⟧ ≡ cast (sym tbits) (cast (tbit) p⟦ x ⟧ + 2 *  cast (tbits) p⟦ xs ⟧)
-  pfunext2 : {x y z  px py pz : Set} {f : x → y → z} { pf : px → py → pz } → ⦃ txpx :  hasT x px ⦄ ⦃ typy :  hasT y py ⦄ ⦃ tzpz : hasT z pz ⦄ →  ( (p : x) → (q : y) → ( p⟦ f p q ⟧ ) ≡ pf p⟦ p ⟧ p⟦ q ⟧   )  → p⟦ f ⟧ ≡ pf
--- pfunext2 {x} {y} {z} {px} {py} {pz} {f} {pf} eq rewrite (pfunext {x} {y → z} {px} {py → pz} {f = f}  eq ) = {!!}
+  pfunext : {x y a b : Set} {f : x → y} {g : a → b} → ⦃ yb :  ⟦ y ⟧≡ b ⦄ → ⦃ xa :   ⟦ x ⟧≡ a ⦄  →  ( (h : x) → (⟦ f h ⟧) ≡ g (⟦ h ⟧)) → ⟦ f ⟧ ≡ g
+  pfunext2 : {x y z  px py pz : Set} {f : x → y → z} { pf : px → py → pz } → ⦃ xpx :  ⟦ x ⟧≡ px ⦄ → ⦃ ypy : ⟦ y ⟧≡ py ⦄ → ⦃ zpz :  ⟦ z ⟧≡ pz ⦄ →  ( (p : x) → (q : y) → (⟦ f p q ⟧ ) ≡ pf ⟦ p ⟧ ⟦ q ⟧   )  → ⟦ f ⟧ ≡ pf
 
-
-
-∀p∧* : (p q : Bit) → p⟦ p ∧ q ⟧ ≡ p⟦ p ⟧ * p⟦ q ⟧
+∀p∧* : (p q : Bit) → ⟦ p ∧ q ⟧ ≡ ⟦ p ⟧ * ⟦ q ⟧
 ∀p∧* false _ = refl
-∀p∧* true c = sym (+-identityʳ p⟦ c ⟧)
-p∧* : p⟦ _∧_ ⟧ ≡ _*_
+∀p∧* true c = sym (+-identityʳ ⟦ c ⟧)
+p∧* : ⟦ _∧_ ⟧ ≡ _*_
 p∧* =  pfunext2 ∀p∧*
 
 
 -- f : A → B
 -- ⟦ f ⟧ = ∀ (a : A) → ⟦ f a ⟧ = f ⟦ a ⟧
-
-instance
-  denotationBool : HasDenotation Bool
-  denotationBool = record {
-    toD = bitD
-    }
-  denotationBits :  HasDenotation (Bits n)
-  denotationBits = record {
-    toD = bitsD
-    }
 
 
 example : ⟦  [ true ] ⟧ ≡ 1
@@ -133,16 +148,16 @@ halfAdderSpec {true} {false} = refl
 halfAdderSpec {true} {true} = refl
 
 
-∀+H+ : (a b : Bit) → p⟦ a +H b ⟧ ≡ p⟦ a ⟧ + p⟦ b ⟧
+∀+H+ : (a b : Bit) → ⟦ a +H b ⟧ ≡ ⟦ a ⟧ + ⟦ b ⟧
 ∀+H+ false c = +-identityʳ ⟦ c ⟧
 ∀+H+ true false = refl
 ∀+H+ true true = refl
 
-+H+ : p⟦ _+H_ ⟧ ≡ _+_
++H+ : ⟦ _+H_ ⟧ ≡ _+_
 +H+ = pfunext2 ∀+H+
 
 _+F_+F_ : Bit → Bit → Bit → Bits 2
-A +F B +F C =   (head second) ∷  ( head (tail first) ∨ head (tail second)) ∷ []
+A +F B +F C =   [ head second ,,  head (tail first) ∨ head (tail second) ]
   where
   -- why can't I pattern match?
     first : Bits 2
@@ -245,6 +260,24 @@ b *S [] = []
 b *S (a ∷ A) = (b ∧ a) ∷ (b *S A)
 
 
+∀*Sspec : (p : Bits n) (q : Bit) → ⟦ q *S p ⟧ ≡ ⟦ p ⟧ * ⟦ q ⟧
+∀*Sspec [] q = refl
+∀*Sspec (bit ∷ bits ) false rewrite (∀*Sspec bits false) | *-zeroʳ ⟦ bits ⟧ | *-zeroʳ ((if bit then 1 else 0) + (bitsD bits + (bitsD bits + 0)))    = refl
+∀*Sspec (bit ∷ bits ) true rewrite (∀*Sspec bits true) | *-identityʳ ⟦ bits ⟧ | *-identityʳ (((if bit then 1 else 0) + (bitsD bits + (bitsD bits + 0))) ) = refl
+-- ∀*Sspec  (bit ∷ bits)  q rewrite (∀*Sspec bits q) | (+-identityʳ ⟦ bits ⟧) | (+-identityʳ (⟦ bits ⟧ * ⟦ q ⟧)) | sym (*-distribʳ-+ ⟦ bits ⟧ (⟦ bits ⟧ ) ⟦ q ⟧) =
+--   begin
+--     (if q ∧ bit then 1 else 0) +  (bitsD bits * (if q then 1 else 0) + bitsD bits * (if q then 1 else 0))
+--     ≡⟨ cong (λ x → ⟦ q ∧ bit ⟧ + x) (sym (*-distribʳ-+ ⟦ q ⟧ (⟦ bits ⟧ ) ⟦ bits ⟧)) ⟩
+--     ⟦ q ∧ bit ⟧ + ((⟦ bits ⟧ + ⟦ bits ⟧ ) * ⟦ q ⟧ )
+--     -- ≡⟨ cong (λ x → ((⟦ bits ⟧ + ⟦ bits ⟧ ) * ⟦ q ⟧ )) ({! !})  ⟩
+--     -- ⟦ q ⟧ * ⟦ bit ⟧ + ((⟦ bits ⟧ + ⟦ bits ⟧ ) * ⟦ q ⟧ )
+--     ≡⟨ {! !} ⟩
+--     ((if bit then 1 else 0) + (bitsD bits + bitsD bits)) * (if q then 1 else 0)
+--   ∎
+
+*Sspec : ⟦ (λ (b : Bits n) →  _*S b) ⟧ ≡ _*_
+*Sspec = pfunext2 ∀*Sspec
+
 bitMulSpec : ⟦ c *S A ⟧ ≡ ⟦ c ⟧ * ⟦ A ⟧
 bitMulSpec {true} {0} {[]} = refl
 bitMulSpec {false} {0} {[]} = refl
@@ -258,17 +291,30 @@ A << 0 =  A -- subst (λ n → Bits n)  (sym (+-identityʳ n)) A
 A << (suc n) = false ∷ A << n
 
 
+∀<<*2 : (m : ℕ) (b : Bits n) → ⟦ b << m ⟧ ≡ ⟦ b ⟧ * (2 ^ m)
+∀<<*2 0 bs =  sym (*-identityʳ ⟦ bs ⟧)
+∀<<*2 (suc m) bs rewrite (∀<<*2 m bs) | +-identityʳ (2 ^ m) | +-identityʳ (⟦ bs << m ⟧ +  ⟦ bs << m ⟧) | +-identityʳ ⟦ (bs) << m ⟧ | +-identityʳ ⟦ bs ⟧ | +-identityʳ (⟦ bs ⟧ * 2 ^ m)  = sym (*-distribˡ-+ ⟦ bs ⟧ (2 ^ m) ( 2 ^ m ))
+
+<<*2 :  (m : ℕ) →  ⟦  (λ (b : Bits n) →  b <<  m) ⟧ ≡ _*  (2 ^ m)
+<<*2 n = pfunext  (∀<<*2 n )
+
 
 _*Ba_ : Bits n → Bits m → Bits (n + m)
-[] *Ba B =  B
-_*Ba_ {n = suc n} (a ∷ A) B = false +B ( a *S B ) << n  +B (A *Ba B)
+_*Ba_ {m = m} [] B =  subst (λ a → Bits a) (  (+-identityʳ m) ) ([] << (m))
+_*Ba_ {n = suc n} (a ∷ A) B = false +B (( a *S B ) << n)  +B (A *Ba B)
+
+_*Ba'_ : Bits n → Bits m → Bits (n + m)
+A *Ba' B = (reverse A) *Ba B
+
+
+-- 10 * 10 =
 
 -- not done yet
-mulSpec : ⟦ A *Ba B ⟧ ≡ ⟦ A ⟧ * ⟦ B ⟧
+mulSpec : ⟦ A *Ba' B ⟧ ≡ ⟦ A ⟧ * ⟦ B ⟧
 mulSpec = {! !}
 
 
-example* : ⟦ [ true ] *Ba [  true ] ⟧ ≡ 2
+example* : ⟦ ( false ∷ false ∷ true ∷ false ∷ []) *Ba' (false ∷ true ∷ false ∷ false ∷  false ∷  []) ⟧ ≡ 8
 example* = refl
 
 ```
