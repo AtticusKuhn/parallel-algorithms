@@ -5,5 +5,8 @@ tmp/
 *.agdai
 MAlonzo/
 _build/
-
-
+agda-latex
+conal_note_*
+.auctex-auto
+.auctex
+latex
