@@ -24,6 +24,7 @@ record HasBitOperations (Bit : S) : Set (Agda.Primitive.lsuc level) where
   field
     bit0 bit1 : ⊤ ⇨ Bit
     xor or and : Bit × Bit  ⇨ Bit
+    not : Bit ⇨ Bit
     if : {A : S } →  Bit × (A × A) ⇨ A
     ifdistrib : {A B : S} {f : A ⇨ B } →  f ∘ if {A} ≈ if {B} ∘ second (twice f)
 

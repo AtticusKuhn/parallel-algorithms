@@ -24,9 +24,9 @@
 % \input{agda-commands}
 
 \usepackage{hyperref}
+\usepackage{tcolorbox}
 \usepackage{amssymb}
 \usepackage{amsmath}
-\usepackage{amsthm}
 \usepackage[pdf]{graphviz}
 
 \hypersetup{
@@ -45,27 +45,6 @@
 \setlength{\parindent}{1em}
 % \usepackage[colorinlistoftodos]% {todonotes}
 \newcommand{\atticus}[1]{\textbf{AK: #1}}
-\theoremstyle{plain}
-\newtheorem{thm}{Theorem}
-\newtheorem{lemma}[thm]{Lemma}
-\newtheorem{cor}[thm]{Corollary}
-\newtheorem{conj}[thm]{Conjecture}
-\newtheorem{prop}[thm]{Proposition}
-\newtheorem{heur}[thm]{Heuristic}
-\newtheorem{qn}[thm]{Question}
-\newtheorem{claim}[thm]{Claim}
-
-\theoremstyle{definition}
-\newtheorem{defn}[thm]{Definition}
-\newtheorem{cond}[thm]{Conditions}
-\newtheorem*{notn}{Notation}
-
-\theoremstyle{remark}
-\newtheorem{rem}[thm]{Remark}
-\newtheorem*{ex}{Example}
-\newtheorem*{nonex}{Nonexample}
-\newtheorem*{exer}{Exercise}
-
 
 \begin{document}
 \tikzset{block/.style={draw, fill=white, rectangle,
@@ -84,55 +63,60 @@ pinstyle/.style={pin edge={to-,thin,black}}}
 %% \end{abstract}
 
 % \agda{Lang-ops}
-\tableofcontents
-\section{Abstract}
-In this paper, we will give an introduction to basic category theory. We then will use knowledge of category theory, as well as the programming language Agda (see \cite{agda}), to
+\section*{Abstract}
+In this paper, we will give an introduction to basic category theory. We then will use knowledge of category theory, as Agda (see~\cite{agda}), to
 prove the formal correctness of machine algorithms for arithmetic over bits. Our goal is to make the most elegant and precise specification of binary arithmetic for proofs of correctness.
+
+We will specifically be focusing on conversions between numbers and binary representations, as well as addition and multiplication of binary representations.
+
+\tableofcontents
 \sectionl{Introduction}
 
-The goal of this paper is to use the techniques of Denotational Design (for more information, see \cite{conal}), where we specify the meaning (or ``denotation'')
-as elegantly as possible for the ease of proof. In this paper, we will use the example of computer binary arithmetic. We will specify the correctness of binary arithmetic
-using tools from category theory, and then we will prove that our definitions satisfy our specifications. A background in category theory will be helpful, but the reader
+The goal of this paper is to use the techniques of Denotational Design (see~\cite{conal}), where we specify the meaning (or ``denotation'')
+as elegantly as possible for the ease of proof. This paper will use the example of computer binary arithmetic. We will specify the correctness of binary arithmetic
+using tools from category theory, and then prove that our definitions satisfy the specification. A background in category theory will be helpful, but the reader
 will not need to know category theory, as we will give a basic introduction in Section~\ref{sec:cat}.
 
+
 \section{Basic Introduction to Category Theory}\label{sec:cat}
-We do not assume the reader has prior knowledge of category theory, so we will give a basic introduction to the concepts of category theory.
-Most of this information comes from \cite{cats}, and we recommend the reader look there for further information on category theory.
+Most of the information on category theory comes from~\cite{cats}, and it is recommended that the reader look there for further information on category theory.
 
 \begin{defn}
   A \textbf{category} consists of a set of \textbf{objects} and a set of \textbf{arrows} (called ``morphisms'') between objects. We use the notation $f : A \to B$ to write that $f$
   is an arrow from $A$ to $B$. Each arrow points from one
-  object to another object. The objects and arrows must satisfy $2$ laws:
+  object to another object. The objects and arrows must satisfy $4$ properties:
   \begin{enumerate}
-    \item For all objects $A$, there must exist an arrow, called $Id_{A} : A \to A$
-    \item For all arrows $f: B \to  C$ and all arrows $g : A \to B$, there must exist an arrow called $f \circ g : A \to C$
+    \item \textbf{identity} For all objects $A$, there exists an arrow, $Id_{A} : A \to A$.
+    \item \textbf{composition}: For all arrows $f: B \to  C$ and all arrows $g : A \to B$, there exists arrow $f \circ g : A \to C$.
+    \item \textbf{identity cancellation}: For all arrows $f : A \to B$, $f \circ Id_{A} = Id_{B} \circ f = f$.
+    \item \textbf{associativity}: For all arrows $f : C \to D $, $g : B \to C$, $h : A \to B$, $f \circ (g \circ h) = (f \circ g) \circ h$.
 \end{enumerate}
 \end{defn}
 
 \begin{ex}
-  There are many examples of categories that the reader will perhaps already know:
+  There are many examples of categories that the reader might perhaps already know:
   \begin{enumerate}
-    \item $\textbf{Set}$: the objects are sets and the arrows are functions between sets
-    \item $\textbf{Rng}$: the objects are rings and the arrows are ring homomorphisms
-    \item $\textbf{Grp}$: the objects are groups and the arrows are group homomorphisms
-    \item $\le$: the objects are natural numbers and the arrows are proofs of $\le$
+    \item $\textbf{Set}$: The objects are sets and the arrows are functions between sets.
+    \item $\textbf{Rng}$: The objects are rings and the arrows are ring homomorphisms.
+    \item $\textbf{Grp}$: The objects are groups and the arrows are group homomorphisms.
+    \item $\le$: The objects are natural numbers and the arrows are proofs that $a \le b$.
     \end{enumerate}
 \end{ex}
 
 
-One tool that is useful in category theory is the idea of a commutivity diagram, which allows us to compactly and elegently represent equations
+One tool that is useful in category theory is the idea of a commutivity diagram, which allows us to compactly and elegently represent equations.
 
 \begin{defn}
-  A \textbf{commutivity diagram} is a type of picture that represents a category by drawing the objects as points and arrows as directed arrows between objects, having the property all directed
-  paths with the same start and same end must represent the same composition. For example, consider \figref{commdia}. It represents the same information as Equation~\ref{eqn:comm}.
-  Category Theorists love commutivity diagrams.
+  A \textbf{commutivity diagram} is a type of picture that represents a category by drawing the objects as points and arrows as directed arrows between objects, having the property that all directed
+  paths with the same start and end must represent the same composition. For example, consider \figref{commdia}. It represents the same information as Equation~\ref{eqn:comm}.
+  Commutativity diagrams are popular in category theory.
   \begin{equation}\label{eqn:comm}
     id_{b} \circ f = f \qquad id_{b} \circ g = g \qquad g \circ f = h
 \end{equation}
 
 
 
-  \begin{figure}[h]
+  \begin{figure}[!h]
 % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRDpAF9T1Nd9CKAEzkqtRizYAjLjxAZseAkQAso6vWatEIAMZcxMKAHN4RUADMAThAC2SMiBwQkARg0TtIC7Ms37iO5OLogi4lpsxr7e-m7UznEgDBAQaERkFoxwMGIMdFIwDAAKfEqCIFZYxgAWOCAeEToAklAA+jLcfnYO8SFhBWBQSADMjpqSOtUGnEA
 \begin{tikzcd}
 a \arrow[rr, "f"] \arrow[rrrr, "h", bend left] &  & b \arrow[rr, "g"] \arrow["Id_b"', loop, distance=2em, in=305, out=235] &  & c
@@ -149,33 +133,54 @@ Functors are like the homomorphisms of categories, i.e.\ maps that respect certa
 
 \begin{defn}
   Given categories $C$ and $D$, we say that $T : C \to D$ is a \textbf{functor} from $C$ to $D$ if $T$ is a function from $C$ to $D$.
-  In an abuse of notation, we say that $T$ is a function on both the objects and the arrows of $C$.
+  At risk of an abuse of notation, we say that $T$ is a function on both the objects and the arrows of $C$.
   We must have that $T$ satisfies some additional properties:
   \begin{enumerate}
     \item For any object $c$ in $C$, $T(Id_{c}) = Id_{T(c)}$
-          \item For any arrows $f : B \to C$ and $g : A \to B$ in $C$, $T(f \circ g) = T(f) \circ T(g)$
+          \item For all arrows $f : B \to C$ and $g : A \to B$ in $C$, $T(f \circ g) = T(f) \circ T(g)$
     \end{enumerate}
 \end{defn}
 
-\begin{ex} \textbf{Forgetful Functors}: One example of a functor is called a ``forgetful'' functor, and goes from a more structured category to a less structured
-  category by simply forgetting some of the information in the structure. Consider, for example, the map from $\textbf{Rng} \to \textbf{Grp}$, or the map from $\textbf{Grp}\to\textbf{Set}$.
+\begin{ex} \textbf{Forgetful Functors}: One example of a functor is called a forgetful functor, which maps from a more structured category to a less structured
+  category by simply ``forgetting'' some of the information in the structure. Consider, for example, the map from $\textbf{Rng} \to \textbf{Grp}$, or the map from $\textbf{Grp}\to\textbf{Set}$.
 
-  Another not-very-interesting functor is called the \textbf{identity functor}, which just sends every object and arrow to itself. We write the identity functor as $\textbf{I}_{C}$.
+  Another functor is called the \textbf{identity functor}, which just sends every object and arrow to itself. We write the identity functor as $\textbf{I}_{C}$.
 \end{ex}
 
 \begin{ex}
   Consider the category $N$ whose objects are sets of natural numbers and whose arrows are functions on natural numbers, and consider $\mathbb{B}^{n}$ as a category whose objects
   are sets of $n$ bit binary strings and whose arrows are functions on binary strings. A function from $N$ to $\mathbb{B}^{n}$ could be to convert each natural number to its binary representation,
-  and convert each function on natural numbers to the corresponding number on binary representations.
-
-  This functor will be of interest to us later.
+  and convert each function on natural numbers to the corresponding number on binary representations. This functor will be of interest to us later.
 \end{ex}
 
-
-Using functors, we can say if two categories are approximately ``the same''
+\begin{defn}
+  Given functors $S,T : C \to B$, a \textbf{natural transformation} $\tau : S \to T$ is a function which assigns to each object $c \in C$ an arrow $\tau_{c} : S(c) \to T(c)$ in $B$ in such a way such that
+  for every arrow $f : c \to c'$ in $C$, we have that \figref{nattrans} commutes.
+\end{defn}
+We may say that natural transformations are to functors as functors are to categories.
 
 \begin{defn}
-  Given categories $C$ and $D$, we say that $C$ and $D$ are equivalent categories if there exist functors $T : C \to D$ and $S : D \to C$ such that $S \circ T = \textbf{I}_{C}$ and $T \circ S = \textbf{I}_{D}$.
+  Given functors $S,T : C \to B$, we say there is a \textbf{natural isomorphism}, written as $S \cong T$, if there is a two-sided natural transformation between $S$ and $T$.
+  If $S$ and $T$ are naturally isomorphic, we may regard them as being the same for all purposes.
+\end{defn}
+\begin{figure}[!h]
+% https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRAGUAKAYwEoQAvqXSZc+QijIAmKrUYs2XbgHJ+QkdjwEiAZlIzq9Zq0QgAKj1WDhIDJvG7ysowtMWVa2TCgBzeEVAAMwAnCABbJDIQHAgkPTljNgAdJJw6Jh41GxDwpABGahikKUN5ExAUtIyPayDQiMR4osQShNdzTkCsutzEKOaCtvKuLsEKASA
+\begin{tikzcd}
+S(c) \arrow[rrr, "\tau(c)"] \arrow[dd, "S(f)"] &  &  & T(c') \arrow[dd, "T(f)"] \\
+                                               &  &  &                          \\
+S(c') \arrow[rrr, "\tau(c')"]                  &  &  & T(c')
+\end{tikzcd}
+\centering
+\caption{A Commutativity Diagram for Natural Transformations}
+\label{fig:nattrans}
+\end{figure}
+
+
+Using functors, we can say if two categories are ``the same''.
+
+
+\begin{defn}
+  Given categories $C$ and $D$, we say that $C$ and $D$ are equivalent categories if there exist functors $T : C \to D$ and $S : D \to C$ such that $S \circ T \cong \textbf{I}_{C}$ and $T \circ S \cong \textbf{I}_{D}$.
 \end{defn}
 
 
@@ -204,27 +209,63 @@ We now give some examples of products.
   In the category of sets, the product corresponds to the Cartesian product. In the category of groups, the product corresponds to the direct sum.
 \end{ex}
 
-This ends the material from Category Theory which is necessary for the rest of this paper, although the subject is much deeper.
+\begin{defn}
+  Given a category $C$, we say that $C$ is a \textbf{monoidal category} if it has a bifunctor $\otimes : C \times C \to C$ which is associatiative and has a two-sided inverse $1 \in C$. We have that equation~\ref{eq:mon} holds.
+  \begin{align}\label{eq:mon}
+    U \otimes (V \otimes W) &\cong (U \otimes V) \otimes W \\
+    U \otimes 1 &\cong U \\
+    1 \otimes U &\cong U
+    \end{align}
+\end{defn}
+
+\begin{defn}
+  Given a category $C$, we say that $C$ is a \textbf{Cartesian category} if it is a monoidal category where the monoid operation is a product and the identity is the initial object.
+\end{defn}
+
+% This ends the material from Category Theory which is necessary for the rest of this paper, although the subject is much deeper.
+This ends our discussion of Category Theory.
 
 
 \end{defn}
 \section{Preliminaries}
-We will be working with numbers and bits. Our number system will be any Euclidean Domain, and our system of bits will be a boolean algebra.
-We will model functions using an arbtitrary cartesian category. For the purposes of notation, $N$ will denote the number system and $\mathbb{B}$ will denote
-the bit system. For more notation, we may use $\mathbb{B}^{n}$ to denote a string of $n$ bits. For example, we may write $0101 : \mathbb{B}^{4}$.
+We will be working with numbers and bits.
+Let $N$ be a Cartesian category representing our numbers. We will assume that there are bifunctors on $N$ called
+\[+_{N} : N \times N \to N \qquad \cdot_{N} : N \times N \to N.\]
+
+Let $\mathbb{B}^{n}$ be a Cartesian category of $n$-bit binary representations. We will assume functors in equation~\ref{eq:bitfunctors}.
+\begin{align}\label{eq:bitfunctors}
+  \oplus &: \mathbb{B} \times \mathbb{B} \to \mathbb{B} \\
+  \land &: \mathbb{B} \times \mathbb{B} \to \mathbb{B} \\
+  \lor &: \mathbb{B} \times \mathbb{B} \to \mathbb{B} \\
+  if &: \mathbb{B} \times A \times A \to A
+\end{align}
+
+We will assume the following properties in equation~\ref{eq:bitprops}. %% \atticus{This is false}.
+
+\begin{align}\label{eq:bitprops}
+  \forall A \in \mathbb{B} \quad \forall c \in S \quad if(A,c,c)  &= c \\
+  \forall A \in \mathbb{B} \quad \forall b,c \in S \quad \forall f : S \to T \quad  f(if(A,b,c)) &= if(A,f(b), f(c)) \\
+  \forall A, B \in \mathbb{B} \quad \forall a,b,c \in S \quad if(A, if(B, a,b),c) &= if(A \land B, a, if(A, b,c)) \\
+  \forall A, B \in \mathbb{B} \quad \forall a,b,c \in S \quad if(A, a, if(B,b,c)) &= if(A \oplus B, if(A , a , b), c )
+\end{align}
+% \[\oplus : \mathbb{B} \times \mathbb{B} \to \mathbb{B} \qquad  \]
+
+% Our number system will be any Euclidean Domain, and our system of bits will be a boolean algebra.
+% We will model functions using an arbtitrary cartesian category. For the purposes of notation, $N$ will denote the number system and $\mathbb{B}$ will denote
+% the bit system. For more notation, we may use $\mathbb{B}^{n}$ to denote a string of $n$ bits. For example, we may write $0101 : \mathbb{B}^{4}$.
 
 To go between numbers and bits, we will assume there is a homomorphism
 \rnc\source{functor}
 \agda{Functor}
-such that
-\[\forall A,B \in N \qquad \%2(1_{N}) = 1_{\mathbb{B}} \qquad \%2(0_{N}) = 0_{\mathbb{B}} \qquad \%2(A +_{N} B) = \%2(A) \otimes \%2(B).\]
+such that for all $A,B \in N$
+\[ \%2(1_{N}) = 1_{\mathbb{B}} \qquad \%2(0_{N}) = 0_{\mathbb{B}} \qquad \%2(A +_{N} B) = \%2(A) \otimes \%2(B).\]
 
 You can think of $\%2$ as just returning the last bit of a number ($1$ if the number is odd and $0$ if the number is even).
 
 We will represent binary numbers in Agda as lists of bits, where the least significant bit is on the left (little endian encoding).
 
 As an additional preliminary, we expect the reader to be familiar with common bitwise operations, including $\cdot \oplus \cdot$, $\cdot \lor \cdot$, and $\cdot \land \cdot$ (see table~\ref{table:bitops}).
-\begin{table}[h!]
+\begin{table}[!h]
 \centering
 \begin{tabular}{||c c c||}
  \hline
@@ -233,7 +274,7 @@ As an additional preliminary, we expect the reader to be familiar with common bi
  $0 \oplus 0 = 0$ & $0 \lor 0 = 0$ & $0 \land 0 = 0$ \\
  $0 \oplus 1 = 1$ & $0 \lor 1 = 1$ & $0 \land 1 = 0$ \\
  $1 \oplus 0 = 1$ & $1 \lor 0 = 1$ & $1 \land 0 = 0$ \\
- $1 \oplus 1 = 0$ & $1 \lor 0 = 0$ & $1 \land 1 = 1$ \\
+ $1 \oplus 1 = 0$ & $1 \lor 0 = 1$ & $1 \land 1 = 1$ \\
  \hline
 \end{tabular}
 \caption{$\cdot \oplus \cdot$, $\cdot \lor \cdot$, and $\cdot \land \cdot$}
@@ -250,10 +291,10 @@ Nto\mathbb{B}^{n}(A) = [A \% 2 , \frac{A}{2} \% 2 , \frac{A}{4} \% 2 , \ldots, \
   \mathbb{B}^{n}toN([b_{1}, b_{2}, \ldots, b_{n}]) = b_{1} + 2b_{2}+4b_{3}+\cdots+2^{n-1}b_{n}
 \end{equation}
 \rnc\source{bin2}
-In Agda, we would write equation~\ref{eqn:ntob} as \figrefdef{agda:conversions}{Agda Code for Converting a Number to Binary}{\agda{Conversions}}
+In Agda, we would write equation~\ref{eqn:ntob} as \figrefdef{agda:conversions}{Agda Code for Converting a Number to Binary}{\agda{Conversions}}.
 
- Look at figure~\ref{fig:conversionsntob} and figure~\ref{fig:conversionsbton} for an example of these conversions.
- \begin{figure}
+ See \figreftwo{conversionsbton}{conversionsntob} for an example of these conversions.
+ \begin{figure}[h]
    \digraph[width=\textwidth]{conversions}{
   node [shape=Mrecord]
   rankdir=LR
@@ -286,7 +327,7 @@ dub2:dub2o -> add2:add22 [label="2"]
    \caption{An Example showing $\mathbb{B}^{3}toN(101) = 5$}
    \label{fig:conversionsbton}
 \end{figure}
- \begin{figure}
+ \begin{figure}[h]
 \digraph[width=\textwidth]{ntob}{
   node [shape=Mrecord]
   rankdir=LR
@@ -312,7 +353,7 @@ dub2:dub2o -> add2:add22 [label="2"]
    \caption{An Example showing $Nto\mathbb{B}^{3}(5) = 101$}
    \label{fig:conversionsntob}
 \end{figure}
-In order for $Nto\mathbb{B}^{n}$ and $\mathbb{B}^{n}toN$ to be correct, we would need diagram that~\ref{fig:conversions} commutes.
+In order for $Nto\mathbb{B}^{n}$ and $\mathbb{B}^{n}toN$ to be correct, we would need that diagram~\ref{fig:conversions} commutes.
 % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRAEEB9AORAF9S6TLnyEUAFnJVajFm244IAHSUBbOjgAWAI23AAQnwB6YABRduASn7SYUAObwioAGYAnCKqRkQipAEZqbRgwKCQAWgBmH3pmVkQQBWU1DR09QxN+QRB3TwDqP0QfYNCI6OpYuQSVdS1dA2MwRV4BVw8vREDfCHyQBggINCIyF0Y4GGkGOmCGAAVhPAI2Nyx7TRwQCtl4kABJKE5gGtT6jLA+LLa8ooKem76BoZQRsYnqKZn57EWxEBW1jZbOJsfY8Gx8IA
 \begin{figure}[h]
 \begin{tikzcd}
@@ -330,7 +371,7 @@ In equational form, diagram~\ref{fig:conversions} is equivalent to equation~\ref
 
 In Agda, we would write equation~\ref{eqn:conversions} as \figrefdef{inverses}{An Agda Specification that Conversions are Inverses}{\agda{Inverses}}.
 In category theory, diagram~\ref{fig:conversions} shows there exists an equivalence of categories between $N$ and $\mathbb{B}^{n}$.
-Equation~\ref{eqn:conversions} is true, but the proof is too long to be contained here. You can see the proof at \footnote{\url{https://github.com/AtticusKuhn/parallel-algorithms}}.
+Equation~\ref{eqn:conversions} is true, but the proof is too long to be contained here. You can see the proof at~\cite{github}.
 \section{Addition}
 \subsection{Correctness of Addition}
 Before we can discuss addition, we need to make sure we know what we mean by correct addition. Addition on binary numbers is correct
@@ -349,11 +390,12 @@ A_N \times B_N \arrow[rrrr, "+_{N}"]                                            
 \end{figure}
 Diagram~\ref{fig:add} in equational form is equivalent to equation~\ref{eqn:add}.
 \begin{equation}\label{eqn:add}
-  \forall A , B \in \mathbb{B}^{n} \qquad \mathbb{B}^{n}toN(A+_{\mathbb{B}^{n}}B) = \mathbb{B}^{n}toN(A)+_{N}\mathbb{B}^{n}toN(B).
+  \text{For all } A , B \in \mathbb{B}^{n} \qquad \mathbb{B}^{n}toN(A+_{\mathbb{B}^{n}}B) = \mathbb{B}^{n}toN(A)+_{N}\mathbb{B}^{n}toN(B).
 \end{equation}
 In Agda, we would write the same specification as \figrefdef{addspec}{Specification of Addition in Agda}{\agda{RCAspec}}.
 \subsection{Defining Addition}
-Before we can define an adder, we need to define half-adders and full-adders.
+Before we can define an adder, we need to define half-adders and full-adders. Half-adders and Full-adders are tools from electronics for adding
+two or three bits at a time, respectively.
 A half-adder adds two bits with a carry, so for example
 \[0 +_{H} 0 = (0,0) \qquad 0 +_{H} 1 = 1 +_{H} 0 = (1 , 0) \qquad 1 +_{H} 1 = (0 ,1 )\]
 where, for convention, we say the left bit is the sum and the right bit is the carry.
@@ -362,10 +404,7 @@ We might write $\cdot +_{H}\cdot$ as equation~\ref{eqn:defhalfadd}.
   \forall A,B\in \mathbb{B}^{1} \qquad A +_{H} B = (A \oplus B , A \land B)
 \end{equation}
 
-In Agda, we would write equation~\ref{eqn:defhalfadd} as \figrefdef{agdahalfadd}{A half-adder in Agda}{\agda{HalfAdder}}.
-
-The half-adder is correct if and only if diagram \ref{fig:halfadder} commutes.
-
+In Agda, we would write equation~\ref{eqn:defhalfadd} as \figrefdef{agdahalfadd}{A half-adder in Agda}{\agda{HalfAdder}}.The half-adder is correct if and only if diagram~\ref{fig:halfadder} commutes.
 \begin{figure}[h]
 \begin{tikzcd}
 A_{\mathbb{B}^1} \times B_{\mathbb{B}^1} \arrow[rrrr, "+_H"] \arrow[dd, "\mathbb{B}^1toN"]              &  &  &  & A_{\mathbb{B}^1} +_H B_{\mathbb{B}^1} \arrow[dd, "\mathbb{B}^2toN"]                  \\
@@ -376,16 +415,16 @@ A_{N} \times B_{N} \arrow[rrrr, "+_{N}"] &  &  &  & A_{N} +_{N}  B_{N}
 \caption{Correctness Specification of a Half-adder}
 \label{fig:halfadder}
 \end{figure}
-
 In equational form, diagram~\ref{fig:halfadder} is equivalent to equation~\ref{eqn:halfadder}.
 \begin{equation}\label{eqn:halfadder}
-\forall A,B \in \mathbb{B}^{1} \qquad \mathbb{B}^{2}toN(A +_{H} B) = \mathbb{B}^{1}toN(A) +_{N} \mathbb{B}^{1}toN(B)
+  \text{For all } A,B \in \mathbb{B}^{1} \qquad \mathbb{B}^{2}toN(A +_{H} B) = \mathbb{B}^{1}toN(A) +_{N} \mathbb{B}^{1}toN(B)
 \end{equation}
 
 We will now prove equation~\ref{eqn:halfadder}
 
 \begin{proof}
-  \begin{align}
+  We prove equation~\ref{eqn:halfadder} using the algebraic laws introduced in equation~\ref{eq:bitprops}.
+  \begin{align*}
     if(A, 1, 0) + if(B, 1,0)
     &= if(A, 1 + if(B,1,0), 0 + if(B, 1,0)) \\
     &= if(A, if(B, 2,1), if(B,1,0)) \\
@@ -397,12 +436,12 @@ We will now prove equation~\ref{eqn:halfadder}
     &=if(A\land B,if(A \oplus B , 3 , 2)  , if(A \oplus B , 1 , 0) ) \\
     &=if(A\land B, 2 + if(A \oplus B , 1 , 0)  ,  0 + if(A \oplus B , 1 , 0) ) \\
     &=if(A\land B, 2 ,  0  ) + if(A \oplus B , 1 , 0)
-\end{align}
+\end{align*}
 \end{proof}
 In Agda, we would write the same proof as \figrefdef{HAS}{A Proof of our half-adder specification written in Agda}{\agda{HalfAdderSpec}}.
 To see an example of a half-adder, look at figure~\ref{fig:halfadder}.
- \begin{figure}
-   \digraph[width=\textwidth]{halfadder}{
+ \begin{figure}[!h]
+   \digraph[width=.7\textwidth]{halfadder}{
   node [shape=Mrecord]
   rankdir=LR
   input [label="{Input|{<in1>1|<in2>1}}"]
@@ -422,8 +461,13 @@ To see an example of a half-adder, look at figure~\ref{fig:halfadder}.
 \end{figure}
 
 
-A full-adder is very similar to a half-adder, except a full-adder adds $3$ bits and returns a sum bit and a carry bit. For example,
-\[+_{F}(0,0,0) = (0,0) \qquad +_{F}(1,0,0) = +_{F}(0,1,0) = +_{F}(0,0,1) = (1,0) \qquad +_{F}(0,1,1) = +_{F}(1,0,1) = +_{F}(1,1,0) = (0,1) \qquad +_{F}(1,1,1) = (1,1)\]
+A full-adder is very similar to a half-adder, except a full-adder adds $3$ bits and returns a sum bit and a carry bit. For example, see equation~\ref{eq:exfulladd}.
+\begin{align}\label{eq:exfulladd}
+  &+_{F}(0,0,0) = (0,0) \\
+  &+_{F}(1,0,0) = +_{F}(0,1,0) = +_{F}(0,0,1) = (1,0) \\
+  &+_{F}(0,1,1) = +_{F}(1,0,1) = +_{F}(1,1,0) = (0,1) \\
+  &+_{F}(1,1,1) = (1,1)
+\end{align}
 
 
 A full-adder is correct if and only if diagram~\ref{fig:fulladder} commutes.
@@ -438,23 +482,22 @@ A_{N} \times B_{N} \times C_{N} \arrow[rrr, "+_N"] &  &  & {A_N +_N B_N +_N C_N}
 \caption{Correctness Specification of a Full-adder}
 \label{fig:fulladder}
 \end{figure}
-
 In equational form, diagram~\ref{fig:fulladder} is equivalent to equation~\ref{eqn:fulladderspec}.
 
 \begin{equation}\label{eqn:fulladderspec}
-  \forall A,B, C \in \mathbb{B}^{1} \qquad \mathbb{B}^{2}toN(+_{F}(A,B,C)) = \mathbb{B}^{1}toN(A) + \mathbb{B}^{1}toN(B)+\mathbb{B}^{1}toN(C)
+  \text{for all }A,B, C \in \mathbb{B}^{1} \qquad \mathbb{B}^{2}toN(+_{F}(A,B,C)) = \mathbb{B}^{1}toN(A) + \mathbb{B}^{1}toN(B)+\mathbb{B}^{1}toN(C)
 \end{equation}
  In Agda, we would write equation~\ref{eqn:fulladderspec} as \figrefdef{fulladderspec}{A Full-Adder Specification in Agda}{\agda{FullAdderSpec}}.
 
 We will now prove equation~\ref{eqn:fulladderspec}.
 
 \begin{proof}
-  \begin{align}
+  \begin{align*}
     if(A,1,0) + if(B,1.0) + if(C,1,0)
     &= if(A \land B , 2, 0) + if(A \oplus B, 1, 0) + if(C, 1, 0) \\
-    &= if(A \land B , 2, 0) + if( (A \oplus B) \land C, 2, 0) + if(A \oplus B \oplus C, 1, 0) \\
+    &= if(A \land B , 2, 0) + if( (A \oplus B) \land C, 2, 0)\\ &+ if(A \oplus B \oplus C, 1, 0) \\
     &= if( A \land B \lor A \oplus B \land C , 2 , 0 ) + if(A \oplus B \oplus C , 1, 0)
-    \end{align}
+    \end{align*}
 \end{proof}
 
 One example of an explicitly written full-adder is equation~\ref{eqn:fulladderdef}.
@@ -465,8 +508,8 @@ One example of an explicitly written full-adder is equation~\ref{eqn:fulladderde
 
 In Agda, we may write equation~\ref{eqn:fulladderdef} as  \figrefdef{agdafulladder}{A full-adder in Agda}{\agda{FullAdder}}.
 To see an example of a full-adder, look at figure~\ref{fig:fulladder}.
- \begin{figure}
-   \digraph[width=\textwidth]{fulladder}{
+ \begin{figure}[!h]
+   \digraph[width=.7\textwidth]{fulladder}{
   node [shape=Mrecord]
   rankdir=LR
   input [label="{Input|{<in1>1|<in2>0|<in3>1}}"]
@@ -492,18 +535,28 @@ or:oo -> output:outc [label="1"]
 
 The reason we care about full-adders is that full-adders are the building blocks which we use to build up an $n$ bit adder (in general, to write an $n$ bit adder, we use $n$ full-adders).
 
-Using a full-adder, we may define a ripple-carry adder (RCA). One example of an RCA is \figref{RCA}.
+Using a full-adder, we may define a ripple-carry adder (RCA). An RCA is similar to the addition taught in school. See table~\ref{tab:gradeschooladdition}. One example of an RCA is \figref{RCA}.
 
+\begin{table}
+ \begin{tabular}{c|c|c|c}
+     ${}^1$ & ${}^11$    &${}^1 0$    &1\\
+     + & 1      & 1    & 1 \\ \hline
+    1 & 1    & 0    &0\\ \hline
+ \end{tabular}
+ \centering
+ \caption{Grade-School Addition}
+ \label{tab:gradeschooladdition}
+\end{table}
 \begin{equation}\label{eqn:RCA}
   \begin{split}
-  (a_{0} , a_{1}, a_{2}, \ldots, a_{n}) +_{\mathbb{B}^{n}}^{c_{0}} (b_{0}, b_{1}, b_{2}, \ldots, b_{n}) = (r_{0}, (a_{1}, a_{2}, \ldots, a_{n}) +_{\mathbb{B}^{n-1}}^{c_{1}} (b_{1}, b_{2}, \ldots, b_{n})) \\
-  \text{where}\\
-  (r_{0}, c_{1}) = +_{F}(a_{0}, b_{0}, c_{0})
+  &(a_{0} , a_{1}, a_{2}, \ldots, a_{n}) +_{\mathbb{B}^{n}}^{c_{0}} (b_{0}, b_{1}, b_{2}, \ldots, b_{n}) = (r_{0}, (a_{1}, a_{2}, \ldots, a_{n}) +_{\mathbb{B}^{n-1}}^{c_{1}} (b_{1}, b_{2}, \ldots, b_{n})) \\
+  &\text{where}\\
+  &(r_{0}, c_{1}) = +_{F}(a_{0}, b_{0}, c_{0})
     \end{split}
   \end{equation}
   To see an example of a 3-bit RCA, look at figure~\ref{fig:rca}. In Agda, we could write this as \figrefdef{rca}{A Ripple-Carry Adder in Agda}{\agda{RCA}}.
- \begin{figure}
-   \digraph[width=\textwidth]{bitadder}{
+ \begin{figure}[!h]
+   \digraph[width=.7\textwidth]{bitadder}{
 node [shape=Mrecord]
   rankdir=LR
   input1 [label="{Input 1|{<i11>1|<i12>0|<i13>1}}"]
@@ -535,30 +588,55 @@ input1:i11 -> f3:f31 [label="1"]
 We will now prove the correctness of our addition on binary numbers.
 We need to show equation~\ref{eqn:addspec}.
 \begin{equation}\label{eqn:addspec}
-  \forall A , B \in \mathbb{B}^{n} \quad \forall c \in \mathbb{B}^{1} \qquad \mathbb{B}^{n+1}toN(A +_{\mathbb{B}^{n}}^{c} B) = \mathbb{B}^{n}toN(A) +_{N} \mathbb{B}^{n}toN(B) +_{N} \mathbb{B}^{1}toN(c)
+  \text{For all } A , B \in \mathbb{B}^{n} \quad  c \in \mathbb{B}^{1} \qquad \mathbb{B}^{n+1}toN(A +_{\mathbb{B}^{n}}^{c} B) = \mathbb{B}^{n}toN(A) +_{N} \mathbb{B}^{n}toN(B) +_{N} \mathbb{B}^{1}toN(c)
 \end{equation}
 
 \begin{proof}
   We will prove by induction on $n$.
 
-  Base Case: $n=0$ (trivial).
+  Base Case: $n=0$ follows from a simple computation.
 
   Inductive case: $n=n+1$
-  \begin{align}
+  \begin{align*}
     &\mathbb{B}^{n+1}toN(A +_{\mathbb{B}^{n}}^{c} B)\\
     &=  if( a_{0} \oplus b_{0} \oplus c ,1 , 0  ) +_{N} 2  \mathbb{B}^{n}toN([a_{1}, \ldots , a_{n - 1}] +_{\mathbb{B}^{n-1}}^{a_{b}b_{0} \lor (a_{0}\oplus b_{0}) c} [b_{1}, \ldots, b_{n-1}]) \\
-    &=   if( a_{0} \oplus b_{0} \oplus c ,1 , 0  )  +_{N} 2 (\mathbb{B}^{n-1}toN([a_{1}, \ldots , a_{n - 1}]) +_{N} \mathbb{B}^{n-1}toN([b_{1}, \ldots, b_{n-1}])) +_{N} if(a_{b}b_{0} \lor (a_{0}\oplus b_{0}) c,1,0) \\
-    &=   if( a_{0} \oplus b_{0} \oplus c ,1 , 0  ) +_{N} if(a_{b}b_{0} \lor (a_{0}\oplus b_{0}) c,1,0)  +_{N} 2 \mathbb{B}^{n-1}toN([a_{1}, \ldots , a_{n - 1}]) +_{N} \mathbb{B}^{n-1}toN([b_{1}, \ldots, b_{n-1}])  \\
-    &=   if(a_{0},1,0) +_{N} if(b_{0},1,0) +_{N} if(c,1,0)  +_{N} 2 * \mathbb{B}^{n-1}toN([a_{1}, \ldots , a_{n - 1}]) +_{N} \mathbb{B}^{n-1}toN([b_{1}, \ldots, b_{n-1}])   \\
-    &=   (if(a_{0},1,0) +_{N} 2  \mathbb{B}^{n-1}toN([a_{1}, \ldots , a_{n - 1}]) ) +_{N} (if(b_{0},1,0) +_{N} 2\mathbb{B}^{n-1}toN([b_{1}, \ldots, b_{n-1}]) ) +_{N} if(c,1,0)   \\
-    &=   \mathbb{B}^{n}toN(A) +_{N} \mathbb{B}^{n}toN(B) +_{N}  \mathbb{B}^{1}toN(c)   \\
-\end{align}
+    &=   if( a_{0} \oplus b_{0} \oplus c ,1 , 0  )  +_{N} 2 (\mathbb{B}^{n-1}toN([a_{1}, \ldots , a_{n - 1}]) \\
+    &  +_{N} \mathbb{B}^{n-1}toN([b_{1}, \ldots, b_{n-1}])) +_{N} if(a_{b}b_{0} \lor (a_{0}\oplus b_{0}) c,1,0) \\
+    &=   if( a_{0} \oplus b_{0} \oplus c ,1 , 0  ) +_{N} if(a_{b}b_{0} \lor (a_{0}\oplus b_{0}) c,1,0) \\
+    &  +_{N} 2 \mathbb{B}^{n-1}toN([a_{1}, \ldots , a_{n - 1}]) +_{N} \mathbb{B}^{n-1}toN([b_{1}, \ldots, b_{n-1}])  \\
+    &=   if(a_{0},1,0) +_{N} if(b_{0},1,0) +_{N} if(c,1,0)  +_{N} 2 * \mathbb{B}^{n-1}toN([a_{1}, \ldots , a_{n - 1}]) \\
+    &  +_{N} \mathbb{B}^{n-1}toN([b_{1}, \ldots, b_{n-1}])   \\
+    &=   (if(a_{0},1,0) +_{N} 2  \mathbb{B}^{n-1}toN([a_{1}, \ldots , a_{n - 1}]) ) \\
+    & +_{N} (if(b_{0},1,0) +_{N} 2\mathbb{B}^{n-1}toN([b_{1}, \ldots, b_{n-1}]) ) +_{N} if(c,1,0)   \\
+    &=   \mathbb{B}^{n}toN(A) +_{N} \mathbb{B}^{n}toN(B) +_{N}  \mathbb{B}^{1}toN(c)
+\end{align*}
 \end{proof}
+
+
+% \section{Fast Addition}
+
+% The problem with an RCA is that it is too slow. In this section, we will talk about a Brent-Kung Adder (BCA). We will prove the correctness property of a BCA (which is the same as that of an RCA)
+% and we will show why a BCA is faster than an RCA.
+
+% First, let us define an auxiliary function $\cdot o \cdot$.
+
+% \begin{align}
+%   & \cdot o \cdot : \mathbb{B}^{2} \times \mathbb{B}^{2} \to \mathbb{B}^{2}
+% \end{align}
+
+% \atticus{correctness specification for $o$}
 
 \section{Multiplication}
 
-We will now look at binary multiplication, which will seem very similar to addition. We first need multiplication
-of a number by a single bit. We will say multiplication by a single bit is correct iff \figref{mulbitspec} commutes.
+We will now look at binary multiplication, which will seem very similar to addition.
+The first step we need to take is to ensure that we have a correctness specification for multiplication. We say a multiplication function $\cdot_{\mathbb{B}^{m,n}}$ is correct if it satisfies \eqnref{mulspec}.
+\begin{equation}\label{equation:mulspec}
+  \text{For all } A \in \mathbb{B}^{m} \quad B \in \mathbb{B}^{n} \qquad \mathbb{B}^{m+n}toN(A \cdot_{\mathbb{B}^{m,n}} B) = \mathbb{B}^{m}(A) \cdot_{N} \mathbb{B}^{n}toN(B)
+\end{equation}
+
+
+We first need multiplication
+of a number by a single bit. We will say multiplication by a single bit is correct if \figref{mulbitspec} commutes.
 \begin{figure}
 % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRAEEB9YAHR4Fs6OABYAjUcABCAX2l88-eAAJJ3PoJHip0gHphpIaaXSZc+QigDM5KrUYs2-Jg0m4AFF14ChYiTOlKpCpq3pp+uvoAlIbGIBjYeAREZABMtvTMrIgcnABySvJYinDBuTEmCeZE1mnUGQ7ZXPl8AMZQEDicYKWGtjBQAObwRKAAZgBOEPxIZCA4EEgAjHX2WSBOLrjlIBNTM9TzSCkrmWzqPloyevNlRmOT04jHcwuI1nan2a3tnbexu49li8kO96mtzmFtNcILcKNIgA
 \begin{tikzcd}
@@ -573,35 +651,129 @@ A_N \times B_N \arrow[rrr, "\cdot_N"]                                           
 
 \figref{mulbitspec} is equivalent to equation~\ref{eq:mulbitspec}.
 \begin{equation}\label{eq:mulbitspec}
-  \forall A \in \mathbb{B}^{1} \qquad \forall B \in \mathbb{B}^{n} \qquad \mathbb{B}^{n}toN(mulBit(A,B)) = \mathbb{B}^{1}toN(A) \cdot_{N} \mathbb{B}^{n}toN(B)
+  \text{For all } A \in \mathbb{B}^{1} \qquad B \in \mathbb{B}^{n} \qquad \mathbb{B}^{n}toN(mulBit(A,B)) = \mathbb{B}^{1}toN(A) \cdot_{N} \mathbb{B}^{n}toN(B)
 \end{equation}
 
 
-We define multiplication on a single bit as equation~\ref{eq:mulbit}.
+An example instance of multiplication on a single bit as equation~\ref{eq:mulbit}. We may alternatively implement a bit multiplier as equation~\ref{eq:mulbita},
+although equation~\ref{eq:mulbit} is easier to prove.
 
-\begin{alignat}{5}\label{eq:mulbit}
-  &mulBit : &&\mathbb{B} \times &&\mathbb{B}^{n} &&\to &&\mathbb{B}^{n}\\
-  &mulBit(&&a, &&[b_{0}, b_{1},\ldots,b_{n-1}]) &&= &&[a \land b_{0}, a\land b_{1}, \ldots, a \land b_{n-1}]
+\begin{alignat}{6}\label{eq:mulbit}
+  &mulBit : &&\mathbb{B}^{1} &&\times &&\mathbb{B}^{n} &&\to &&\mathbb{B}^{n}\\
+  &mulBit(&&a &&, &&[b_{0}, b_{1},\ldots,b_{n-1}]) &&= &&[a \land b_{0}, a\land b_{1}, \ldots, a \land b_{n-1}]
 \end{alignat}
+\begin{alignat}{6}\label{eq:mulbita}
+  &mulBit : &&\mathbb{B}^{1} &&\times &&\mathbb{B}^{n} &&\to &&\mathbb{B}^{n}\\
+  &mulBit(&&a &&, &&B) &&= && if(a,B,0)
+\end{alignat}
+
+
 
 We will now prove that equation~\ref{eq:mulbit} satisfies equation~\ref{eq:mulbitspec}.
 \begin{proof}
   Induct on $n$.
-  \begin{align}
+  \begin{align*}
     &\mathbb{B}^{n}toN(mulBit(A,[b_{0}, b_{1}, \ldots, b_{n-1}])) \\
     &= if(A \land b_{0}, 1, 0) + 2\mathbb{B}^{n-1}toN(mulBit(A, [b_{1}, b_{2}, \ldots, b_{n-1}])) \\
     &= if(A \land b_{0}, 1, 0) + 2(\mathbb{B}^{1}toN(A) \cdot_{N} \mathbb{B}^{n-1}toN([b_{1}, b_{2}, \ldots, b_{n-1}])) \\
     &= if(A,1,0)\cdot_{N} if(b_{0}, 1, 0) + 2(\mathbb{B}^{1}toN(A) \cdot_{N} \mathbb{B}^{n-1}toN([b_{1}, b_{2}, \ldots, b_{n-1}])) \\
     &= \mathbb{B}^{1}toN(A)\cdot_{N}\mathbb{B}^{n}toN(B).
-\end{align}
+\end{align*}
 \end{proof}
-\atticus{finish multiplication}
+To see an example of a bit muliplier in a diagram, look at \figref{bitmul}.
+ \begin{figure}[!h]
+   \digraph[width=.7\textwidth]{bitmul}{
+node [shape=Mrecord]
+  rankdir=LR
+  input1 [label="{Input 1|{<i11>1|<i12>0|<i13>1}}"]
+    input2 [label="{Input 2|{<i21>1}}"]
+
+  output [label="{{<o1>1|<o2>0|<o3>1}| Output}"]
+
+  and1 [label="{{<a11>1|<a12>1} | And | {<a1o> 1}}"]
+  input1:i11 -> and1:a11 [label="1"]
+  input2:i21 -> and1:a12 [label="1"]
+  and1:a1o -> output:o1 [label="1"]
+
+    and2 [label="{{<a21>0|<a22>1} | And | {<a2o> 0}}"]
+  input1:i12 -> and2:a21 [label="0"]
+  input2:i21 -> and2:a22 [label="1"]
+  and2:a2o -> output:o2 [label="0"]
+
+    and3 [label="{{<a13>1|<a13>1} | And | {<a3o> 1}}"]
+  input1:i13 -> and3:a31 [label="1"]
+  input2:i21 -> and3:a32 [label="1"]
+  and3:a3o -> output:o3 [label="1"]
+}
+\centering
+\caption{Diagram of a Bit Multiplier}
+\label{fig:bitmul}
+\end{figure}
+In Agda, we would write this code as in \figrefdef{agdamulbit}{A Bit Multiplier in Agda}{\agda{MulDigit}}. We would write our specification as
+\figrefdef{agdamulbitspec}{A Bit Multiplier Specification in Agda}{\agda{MulDigitSpec}}.
+
+For our multiplier, we also need the ability to shift over bits. Shifting provides an example of the difference between operational and
+denotational thinking. The operational meaning is that shifting appends $n$ $0$-bits to the end of a number. The denotational meaning is that
+shifting multiplies a binary representation by $2^{n}$. We would write the denotational specification in Agda as \figrefdef{shiftSpec}{The Denotational Specifcation for Shifting}{\agda{ShiftSpec}}.
+Using this specification, we would then implement a shifter in Agda as \figrefdef{shift}{An Implmentation of Shift in Agda}{\agda{Shift}}.
+We will leave the proof of correctness of \figref{shift} as an exercise to the reader (hint: induct on the amount of shifting).
+
+Using a bit multiplier, we can define a \textbf{shift and add} multiplier. See
+Table~\ref{tab:mul} for an example of shift-and-add multiplication.
+
+\begin{table}[!h]
+  \begin{tabular}{c|c|c|c|c|c|c|c}
+    &  & & & 1 & 0 & 1 & 1 \\
+    &  & & $\times$ & 1 & 1 & 1 & 0 \\
+    \hline
+
+    &  & & & 0 & 0 & 0 & 0 \\
+    &  & & 1 & 0 & 1 & 1 &  \\
+     & & 1 & 0 & 1 & 1 & &   \\
+      + & 1 & 0 & 1 & 1 &    \\
+    \hline
+
+      1 & 0 & 0 & 1 & 1 & 0 & 1 & 0    \\
+\end{tabular}
+\centering
+\caption{An Example shift-and-add multiplication}
+\label{tab:mul}
+\end{table}
+
+In mathematical notation, we would write an add-and-shift multiplier as \eqnref{addnshift}.
+
+\begin{equation}\label{equation:addnshift}
+ \text{For all } b_{0},b_{1},\ldots,b_{n-1} \quad A \in \mathbb{B}^{m} \quad
+  [b_{0},b_{1},\ldots,b_{n - 1}] \cdot_{\mathbb{B}^{n, m}} A = mulBit(b_{0}, A) +  ([b_{1}, \ldots, b_{n-1}] \cdot_{\mathbb{B}^{n-1, m}} A) \ll 1
+\end{equation}
+
+In Agda, we would write a shift-and-add multiplier as \figrefdef{shiftandadd}{A Shift-And-Add Multiplier in Agda}{\agda{ShiftAndAdd}}. We will now proof \eqnref{addnshift} satisfies \eqnref{mulspec}.
+\begin{proof}
+  We will induct on $n$.
+  \begin{align*}
+   & \mathbb{B}^{m+n}toN([b_{0},b_{1},\ldots,b_{n-1}] \cdot_{\mathbb{B}^{n,m}} [a_{0}, a_{1}, \ldots, a_{m-1}]  ) \\
+    &=\mathbb{B}^{m}toN(mulBit(b_{0}, [a_{0}, a_{1}, \ldots,a_{m-1}])) + 2\mathbb{B}^{m+n-1}toN([,b_{1},\ldots,b_{n-1}] \cdot_{\mathbb{B}^{n,m}} [a_{0}, a_{1}, \ldots, a_{m-1}]  ) \\
+    &=\mathbb{B}^{1}toN(b_{0})\mathbb{B}^{m}toN(A) + 2\mathbb{B}^{m+n-1}toN([,b_{1},\ldots,b_{n-1}] \cdot_{\mathbb{B}^{n,m}} [a_{0}, a_{1}, \ldots, a_{m-1}]  ) \\
+    &=\mathbb{B}^{1}toN(b_{0})\mathbb{B}^{m}toN(A) + 2\mathbb{B}^{n-1}([a_{1}, \ldots, a_{n-1}])\mathbb{B}^{m}toN(A) \\
+    &=\mathbb{B}^{n}(B)\mathbb{B}^{m}toN(A)
+\end{align*}
+\end{proof}
+%%  We will p
+
+%% \atticus{finish multiplication}
+
+% This ends our exploration of multiplication.
+
 
 % \agda{All}
+\section{Future Work}
+We will now describe future work for the technique of Denotational Design. There are of course binary subtractors and binary dividers
+to specificy and prove their correctness. One interesting avenue is to prove the correctness of fast adders such as the Brent-Kung adder.
+Such specification is of greater value because Brent-Kung adders are in use in actual hardware, and the correctness of parallel adders is less apparent.
 
 \section*{Acknowledgements}
 The author would like to ackowledge Conal Elliott for his invaluable feedback and insight. The author would like to thank Simon Rubenstein-Salzedo for organizing the Euler Circle.
 The author would like to thank Abhy Devalapura for his wisdom and advice.
-\bibliographystyle{plainnat}
+\bibliographystyle{plain}
 \bibliography{bib}
 \end{document}

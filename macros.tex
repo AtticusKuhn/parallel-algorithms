@@ -120,8 +120,30 @@
 \nc\agda[1]{\ExecuteMetaData[\source.tex]{#1}}
 \nc\agdaIn[2]{{\rnc\source{#1} \agda{#2}}}
 
+\usepackage{amsthm}
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+% \newtheorem{lemma}[thm]{Lemma}
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{conj}[thm]{Conjecture}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{heur}[thm]{Heuristic}
+\newtheorem{qn}[thm]{Question}
+\newtheorem{claim}[thm]{Claim}
+
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition}
+\newtheorem{cond}[thm]{Conditions}
+\newtheorem*{notn}{Notation}
+
+\theoremstyle{remark}
+\newtheorem{rem}[thm]{Remark}
+\newtheorem*{ex}{Example}
+\newtheorem*{nonex}{Nonexample}
+\newtheorem*{exer}{Exercise}
+
+
 
 \author{Atticus Kuhn}
 \title{Denotationally Correct Computer Arithmetic}
-\date{Early draft of \DTMnow{} GMT-8}
-
+\date{\DTMnow{} GMT-8}
